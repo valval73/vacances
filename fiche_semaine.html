@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fiche Hebdo Économique & Boursière</title>
+<link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=IBM+Plex+Mono:wght@300;400;500&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--nv:#1a3a5c;--nv2:#0f2540;--gd:#b8860b;--gdm:#fff8e7;--gn:#1a6b3a;--gnb:#edf7f1;--rd:#c0392b;--rdb:#fdf0ee;--or:#d35400;--bd:#e2ddd6;--bg:#f5f3ef;--wh:#fff;--tx:#1a1a1a;--mu:#7a7060;--sh:0 2px 12px rgba(0,0,0,.06);}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);font-family:'IBM Plex Sans',sans-serif;font-size:13px;color:var(--tx);}
+.header{background:var(--nv2);color:#fff;padding:20px 32px;display:flex;align-items:center;justify-content:space-between;}
+.logo{font-family:'Libre Baskerville',serif;font-size:22px;font-weight:700;color:#f0d080;}
+.sub{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.3);margin-top:2px;}
+.week-badge{background:rgba(240,208,128,.12);border:1px solid rgba(240,208,128,.3);padding:6px 14px;border-radius:3px;font-family:'IBM Plex Mono',monospace;font-size:10px;color:#f0d080;text-align:right;}
+.container{max-width:1100px;margin:20px auto;padding:0 20px;}
+.gen-bar{display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap;}
+.gen-btn{padding:10px 18px;border:1px solid var(--bd);background:var(--wh);color:var(--tx);font-family:'IBM Plex Sans',sans-serif;font-size:12px;font-weight:500;cursor:pointer;border-radius:3px;box-shadow:var(--sh);transition:all .15s;display:flex;align-items:center;gap:8px;}
+.gen-btn:hover{background:var(--nv);color:#fff;border-color:var(--nv);}
+.gen-btn.loading{background:var(--gdm);border-color:var(--gd);color:var(--gd);pointer-events:none;}
+.gen-btn.done{background:var(--gnb);border-color:var(--gn);color:var(--gn);}
+.week-input{padding:9px 13px;border:1px solid var(--bd);border-radius:3px;font-family:'IBM Plex Sans',sans-serif;font-size:12px;color:var(--tx);background:var(--wh);}
+.grid{display:grid;grid-template-columns:2fr 1fr;gap:14px;margin-bottom:14px;}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:14px;}
+.card{background:var(--wh);border:1px solid var(--bd);border-radius:4px;box-shadow:var(--sh);overflow:hidden;}
+.card-hd{padding:10px 16px;border-bottom:1px solid var(--bd);display:flex;align-items:center;gap:8px;background:var(--bg);}
+.card-hd-t{font-family:'IBM Plex Mono',monospace;font-size:8px;text-transform:uppercase;letter-spacing:2px;color:var(--mu);}
+.card-body{padding:14px 16px;min-height:80px;}
+.loading-txt{color:var(--mu);font-style:italic;font-size:11px;display:flex;align-items:center;gap:8px;}
+.spin{display:inline-block;width:12px;height:12px;border:2px solid var(--bd);border-top-color:var(--gd);border-radius:50%;animation:spin .8s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg)}}
+.eco-item{display:flex;align-items:flex-start;gap:10px;padding:6px 0;border-bottom:1px solid rgba(226,221,214,.5);}
+.eco-item:last-child{border-bottom:none;}
+.eco-date{font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--mu);width:55px;flex-shrink:0;margin-top:2px;}
+.eco-imp{width:6px;height:6px;border-radius:50%;flex-shrink:0;margin-top:4px;}
+.eco-high{background:#c0392b;}.eco-med{background:#d35400;}.eco-low{background:#b8860b;}
+.eco-txt{font-size:11px;color:var(--tx);}
+.eco-prev{font-size:9px;color:var(--mu);font-family:'IBM Plex Mono',monospace;margin-top:1px;}
+.mkt-row{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid rgba(226,221,214,.5);}
+.mkt-row:last-child{border-bottom:none;}
+.mkt-n{font-size:11px;color:var(--tx);}
+.mkt-v{font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:500;}
+.mkt-c{font-family:'IBM Plex Mono',monospace;font-size:10px;}
+.pos{color:#1a6b3a;}.neg{color:#c0392b;}.neu{color:var(--mu);}
+.watch-item{display:flex;align-items:flex-start;gap:8px;padding:5px 0;border-bottom:1px solid rgba(226,221,214,.5);}
+.watch-item:last-child{border-bottom:none;}
+.watch-ico{font-size:14px;flex-shrink:0;}
+.watch-txt{font-size:11px;line-height:1.5;}
+.watch-date{font-size:9px;color:var(--mu);font-family:'IBM Plex Mono',monospace;margin-top:1px;}
+.section-rich{font-size:12px;line-height:1.7;color:var(--tx);}
+.section-rich p{margin-bottom:8px;}
+.section-rich p:last-child{margin-bottom:0;}
+.section-rich strong{color:var(--nv);font-weight:600;}
+.section-rich .bull{color:var(--gn);font-weight:600;}
+.section-rich .bear{color:var(--rd);font-weight:600;}
+.section-rich .neut{color:var(--or);font-weight:600;}
+.tag-badge{display:inline-block;padding:1px 5px;border-radius:10px;font-family:'IBM Plex Mono',monospace;font-size:8px;text-transform:uppercase;margin:0 3px;}
+.tag-pos{background:var(--gnb);color:var(--gn);}.tag-neg{background:var(--rdb);color:var(--rd);}.tag-neu{background:var(--gdm);color:var(--gd);}
+.risk-row{display:flex;align-items:center;gap:8px;padding:4px 0;border-bottom:1px solid rgba(226,221,214,.4);}
+.risk-row:last-child{border-bottom:none;}
+.risk-l{font-size:11px;flex:1;}
+.risk-n{font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;width:35px;text-align:right;}
+.risk-b{flex:0 0 90px;height:4px;background:var(--bd);border-radius:2px;overflow:hidden;}
+.risk-f{height:100%;border-radius:2px;}
+.summary-box{background:linear-gradient(135deg,var(--nv2),var(--nv));color:#fff;border-radius:4px;padding:16px 20px;margin-bottom:14px;}
+.summary-t{font-family:'Libre Baskerville',serif;font-size:16px;font-weight:700;color:#f0d080;margin-bottom:8px;}
+.summary-body{font-size:12px;line-height:1.7;color:rgba(255,255,255,.82);}
+.verdict-chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;}
+.vc{padding:4px 10px;border-radius:2px;font-family:'IBM Plex Mono',monospace;font-size:8px;font-weight:600;text-transform:uppercase;}
+.vc-pos{background:rgba(26,107,58,.3);color:#5ddb8a;border:1px solid rgba(26,107,58,.4);}
+.vc-neg{background:rgba(192,57,43,.3);color:#ff7070;border:1px solid rgba(192,57,43,.4);}
+.vc-neu{background:rgba(184,134,11,.2);color:#f0d080;border:1px solid rgba(184,134,11,.3);}
+.print-btn{position:fixed;bottom:20px;right:20px;padding:12px 20px;background:var(--gd);color:#fff;border:none;border-radius:4px;font-size:12px;font-weight:600;cursor:pointer;box-shadow:0 4px 16px rgba(184,134,11,.4);z-index:100;}
+.print-btn:hover{background:#96700a;}
+.error-box{background:var(--rdb);border:1px solid rgba(192,57,43,.2);border-radius:3px;padding:10px 14px;font-size:11px;color:var(--rd);}
+@media print{.gen-bar,.print-btn{display:none!important;}body{background:#fff;}.container{padding:0;}}
+</style>
+</head>
+<body>
+<div class="header">
+  <div>
+    <div class="logo">FICHE HEBDO — MARCHÉS & ÉCONOMIE</div>
+    <div class="sub">PEA Screener Pro · Cabinet Quantitatif · Analyse Fondamentale & Macro</div>
+  </div>
+  <div class="week-badge">
+    <div id="week-label">Semaine du —</div>
+    <div style="font-size:8px;opacity:.5;margin-top:2px">Généré par IA · Données publiques</div>
+  </div>
+</div>
+
+<div class="container">
+  <div class="gen-bar">
+    <input class="week-input" type="text" id="week-input" placeholder="Semaine du... (ex: 10-14 mars 2025)" value="">
+    <button class="gen-btn" id="gen-all-btn" onclick="generateAll()">
+      <span>⚡</span> Générer la fiche complète (IA)
+    </button>
+    <button class="gen-btn" onclick="window.print()">🖨️ Imprimer / PDF</button>
+    <button class="gen-btn" onclick="clearAll()">🔄 Effacer</button>
+  </div>
+  <div id="error-zone"></div>
+
+  <!-- SUMMARY BOX -->
+  <div class="summary-box" id="summary-box">
+    <div class="summary-t">🌍 Synthèse de la semaine</div>
+    <div class="summary-body" id="summary-txt">Cliquer sur "Générer la fiche complète" pour obtenir l'analyse IA de la semaine.</div>
+    <div class="verdict-chips" id="verdict-chips"></div>
+  </div>
+
+  <!-- ROW 1 -->
+  <div class="grid">
+    <div class="card">
+      <div class="card-hd"><span>📊</span><span class="card-hd-t">Marchés & Indices — Semaine écoulée</span></div>
+      <div class="card-body" id="markets-body"><div class="loading-txt">En attente de génération...</div></div>
+    </div>
+    <div class="card">
+      <div class="card-hd"><span>💱</span><span class="card-hd-t">Devises & Matières premières</span></div>
+      <div class="card-body" id="fx-body"><div class="loading-txt">En attente...</div></div>
+    </div>
+  </div>
+
+  <!-- ROW 2 -->
+  <div class="grid">
+    <div class="card">
+      <div class="card-hd"><span>📅</span><span class="card-hd-t">Agenda macro — Données publiées cette semaine</span></div>
+      <div class="card-body" id="macro-body"><div class="loading-txt">En attente...</div></div>
+    </div>
+    <div class="card">
+      <div class="card-hd"><span>🏛️</span><span class="card-hd-t">Banques centrales (BCE · Fed · BoJ)</span></div>
+      <div class="card-body" id="central-body"><div class="loading-txt">En attente...</div></div>
+    </div>
+  </div>
+
+  <!-- ROW 3 -->
+  <div class="grid3">
+    <div class="card">
+      <div class="card-hd"><span>🏢</span><span class="card-hd-t">Résultats entreprises notables</span></div>
+      <div class="card-body" id="results-body"><div class="loading-txt">En attente...</div></div>
+    </div>
+    <div class="card">
+      <div class="card-hd"><span>🌍</span><span class="card-hd-t">Géopolitique & Macro-tendances</span></div>
+      <div class="card-body" id="geo-body"><div class="loading-txt">En attente...</div></div>
+    </div>
+    <div class="card">
+      <div class="card-hd"><span>⚠️</span><span class="card-hd-t">Risques & Vigilance</span></div>
+      <div class="card-body" id="risks-body"><div class="loading-txt">En attente...</div></div>
+    </div>
+  </div>
+
+  <!-- ROW 4 — NEXT WEEK -->
+  <div class="grid">
+    <div class="card" style="border-top:3px solid var(--gd)">
+      <div class="card-hd"><span>🔭</span><span class="card-hd-t">Agenda semaine PROCHAINE — Ce qu'il faut surveiller</span></div>
+      <div class="card-body" id="next-body"><div class="loading-txt">En attente...</div></div>
+    </div>
+    <div class="card" style="border-top:3px solid var(--nv)">
+      <div class="card-hd"><span>💡</span><span class="card-hd-t">Thèmes d'investissement à suivre</span></div>
+      <div class="card-body" id="themes-body"><div class="loading-txt">En attente...</div></div>
+    </div>
+  </div>
+
+  <!-- PEA SPECIFIC -->
+  <div class="card" style="margin-bottom:14px;border-top:3px solid var(--gn)">
+    <div class="card-hd"><span>🇫🇷</span><span class="card-hd-t">Impact spécifique PEA France — CAC40 · SBF120 · SRD</span></div>
+    <div class="card-body" id="pea-body"><div class="loading-txt">En attente...</div></div>
+  </div>
+
+  <div style="font-size:9px;color:var(--mu);text-align:center;padding:12px;border-top:1px solid var(--bd)">
+    ⚠️ Document éducatif uniquement · Généré par IA (Claude) à partir de données publiques · Pas de conseil en investissement agréé AMF<br>
+    PEA Screener Pro · <span id="gen-date"></span>
+  </div>
+</div>
+
+<button class="print-btn" onclick="window.print()">🖨️ Imprimer / Enregistrer PDF</button>
+
+<script>
+document.getElementById('gen-date').textContent = new Date().toLocaleDateString('fr-FR', {weekday:'long',year:'numeric',month:'long',day:'numeric'});
+const now = new Date();
+const monday = new Date(now);
+monday.setDate(now.getDate() - now.getDay() + 1);
+const friday = new Date(monday);
+friday.setDate(monday.getDate() + 4);
+const fmt = d => d.toLocaleDateString('fr-FR',{day:'numeric',month:'long'});
+const defaultWeek = fmt(monday) + ' – ' + fmt(friday) + ' ' + friday.getFullYear();
+document.getElementById('week-input').value = defaultWeek;
+document.getElementById('week-label').textContent = 'Semaine du ' + defaultWeek;
+
+async function callClaude(prompt) {
+  const resp = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 1000,
+      messages: [{role: 'user', content: prompt}]
+    })
+  });
+  if (!resp.ok) throw new Error('API error ' + resp.status);
+  const data = await resp.json();
+  return data.content[0].text;
+}
+
+function setLoading(id) {
+  document.getElementById(id).innerHTML = '<div class="loading-txt"><div class="spin"></div>Génération en cours...</div>';
+}
+function setContent(id, html) {
+  document.getElementById(id).innerHTML = html;
+}
+function clearAll() {
+  ['markets-body','fx-body','macro-body','central-body','results-body','geo-body','risks-body','next-body','themes-body','pea-body'].forEach(id => {
+    document.getElementById(id).innerHTML = '<div class="loading-txt">En attente de génération...</div>';
+  });
+  document.getElementById('summary-txt').textContent = 'Cliquer sur "Générer" pour obtenir l\'analyse.';
+  document.getElementById('verdict-chips').innerHTML = '';
+  document.getElementById('error-zone').innerHTML = '';
+}
+
+async function generateAll() {
+  const week = document.getElementById('week-input').value || defaultWeek;
+  document.getElementById('week-label').textContent = 'Semaine du ' + week;
+  const btn = document.getElementById('gen-all-btn');
+  btn.className = 'gen-btn loading';
+  btn.innerHTML = '<div class="spin"></div> Génération en cours...';
+  document.getElementById('error-zone').innerHTML = '';
+
+  const baseCtx = `Tu es un analyste financier senior spécialisé marchés européens et PEA français. 
+Nous sommes la semaine du ${week}. 
+Réponds UNIQUEMENT en HTML pur (pas de markdown, pas de backticks, pas d'explication).
+Utilise ces classes CSS disponibles : 
+- .eco-item .eco-date .eco-txt .eco-prev .eco-imp .eco-high .eco-med .eco-low pour les événements
+- .mkt-row .mkt-n .mkt-v .pos .neg .neu pour les marchés
+- .watch-item .watch-ico .watch-txt .watch-date pour les points de vigilance
+- .section-rich avec <p>, <strong>, <span class="bull">, <span class="bear">, <span class="neut"> pour le texte
+- .tag-badge .tag-pos .tag-neg .tag-neu pour les badges inline
+Sois CONCIS et PRÉCIS. Maximum 200 mots par section.`;
+
+  const tasks = [
+    {
+      id: 'summary-ai',
+      prompt: baseCtx + `\n\nGénère UNE synthèse de la semaine boursière (${week}) en 3-4 phrases. 
+Format : texte pur (pas de HTML). Inclus : tendance globale, événement majeur, impact sur PEA France.
+Ajoute sur une nouvelle ligne séparée par ||| : 3-5 mots-clés de sentiment sous forme "LABEL:TYPE" où TYPE = pos/neg/neu.
+Ex: "Les marchés ont... ||| CAC40 stable:neu|Fed hawkish:neg|Résultats solides:pos"`
+    },
+    {
+      id: 'markets-body',
+      prompt: baseCtx + `\n\nGénère le tableau des performances des marchés pour la semaine du ${week}.
+Inclus : CAC 40, SBF 120, DAX, Eurostoxx 50, S&P 500, NASDAQ, Nikkei, BTP 10ans, OAT 10ans.
+Pour chaque : variation semaine et ytd. Utilise les classes .mkt-row .mkt-n .mkt-v .pos/.neg/.neu.
+Si tu ne connais pas les données exactes, donne des fourchettes plausibles avec une note "données indicatives".`
+    },
+    {
+      id: 'fx-body',
+      prompt: baseCtx + `\n\nGénère les niveaux clés devises et matières premières pour la semaine du ${week}.
+EUR/USD, EUR/GBP, USD/JPY, Pétrole Brent, Or, Gaz naturel.
+Format .mkt-row. Inclus variation et niveau clé à surveiller.`
+    },
+    {
+      id: 'macro-body',
+      prompt: baseCtx + `\n\nAgenda macro de la semaine du ${week}. 
+Publications importantes : inflation, chômage, PMI, PIB, ventes détail etc.
+Format : liste de .eco-item avec .eco-date (jour), .eco-imp (importance: eco-high/med/low), .eco-txt (indicateur + résultat), .eco-prev (vs précédent).
+Si données non disponibles exactement : donne les publications attendues habituelles pour cette période.`
+    },
+    {
+      id: 'central-body',
+      prompt: baseCtx + `\n\nAnalyse BCE, Fed, BoJ pour la semaine du ${week}.
+Points : décisions de taux, discours importants, signaux forward guidance.
+Format : .watch-item avec .watch-ico (emoji), .watch-txt, .watch-date.`
+    },
+    {
+      id: 'results-body',
+      prompt: baseCtx + `\n\nRésultats d'entreprises notables semaine du ${week}.
+Focus sur les grandes caps françaises (CAC40/SBF120) et américaines (S&P500).
+Format : .watch-item avec .watch-ico (🟢 beat / 🔴 miss / 🟡 en ligne), .watch-txt (société + headline), .watch-date (date).`
+    },
+    {
+      id: 'geo-body',
+      prompt: baseCtx + `\n\n3 points géopolitiques et macro-tendances majeures de la semaine du ${week} avec impact sur marchés.
+Format : .watch-item avec emoji thématique, .watch-txt avec impact marché court/moyen terme.`
+    },
+    {
+      id: 'risks-body',
+      prompt: baseCtx + `\n\nTop 5 risques et points de vigilance pour les 2 semaines à venir.
+Format pour chacun : .risk-row avec .risk-l (description), .risk-n (score 1-10), .risk-b/.risk-f (barre colorée).
+Couleurs barre : rouge si risque >7, orange si 5-7, jaune si <5.`
+    },
+    {
+      id: 'next-body',
+      prompt: baseCtx + `\n\nCalendrier de la semaine PROCHAINE (après ${week}).
+Publications macro importantes, résultats d'entreprises attendus, réunions banques centrales, événements politiques.
+Classe par priorité : 🔴 (critique), 🟠 (important), 🟡 (à suivre).
+Format : .eco-item avec date, importance, description.`
+    },
+    {
+      id: 'themes-body',
+      prompt: baseCtx + `\n\n4 thèmes d'investissement à surveiller/exploiter après la semaine du ${week}.
+Ex : rotation sectorielle, momentum, thème macro porteur ou à éviter.
+Format : .watch-item avec .watch-ico, .watch-txt (thème + conviction + horizon).`
+    },
+    {
+      id: 'pea-body',
+      prompt: baseCtx + `\n\nAnalyse spécifique PEA France pour la semaine du ${week}.
+Points : performance CAC vs World, secteurs français leaders/retardataires, valeurs du SBF120 en vue, impact fiscal/réglementaire si applicable, best/worst performers PEA.
+Format : .section-rich avec paragraphes <p>, utilisé <strong> pour les noms d'entreprises et données chiffrées.`
+    }
+  ];
+
+  // Process summary first, then others in parallel
+  try {
+    const summaryResult = await callClaude(tasks[0].prompt);
+    const parts = summaryResult.split('|||');
+    document.getElementById('summary-txt').textContent = parts[0].trim();
+    if (parts[1]) {
+      const chips = parts[1].trim().split('|').map(c => {
+        const [label, type] = c.trim().split(':');
+        return `<span class="vc vc-${type||'neu'}">${label||c}</span>`;
+      }).join('');
+      document.getElementById('verdict-chips').innerHTML = chips;
+    }
+  } catch(e) {
+    document.getElementById('summary-txt').textContent = 'Erreur de génération — vérifier la connexion.';
+  }
+
+  // Set all others to loading
+  tasks.slice(1).forEach(t => setLoading(t.id));
+
+  // Generate all sections
+  const results = await Promise.allSettled(
+    tasks.slice(1).map(t => callClaude(t.prompt).then(html => ({id: t.id, html})))
+  );
+
+  results.forEach(r => {
+    if (r.status === 'fulfilled') {
+      setContent(r.value.id, r.value.html);
+    } else {
+      const taskId = tasks.find(t => r.reason?.message?.includes(t.id))?.id;
+      if (taskId) {
+        setContent(taskId, '<div class="error-box">⚠️ Erreur de génération pour cette section. ' + r.reason?.message + '</div>');
+      }
+    }
+  });
+
+  btn.className = 'gen-btn done';
+  btn.innerHTML = '✅ Fiche générée — ' + new Date().toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'});
+}
+</script>
+</body>
+</html>
