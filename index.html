@@ -1,0 +1,1785 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PEA Screener Pro v4</title>
+<link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=IBM+Plex+Mono:wght@300;400;500&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+:root{
+  --bg:#f5f3ef;--wh:#fff;--sf:#fafaf8;--bd:#e2ddd6;--bd2:#ccc7be;
+  --nv:#1a3a5c;--nv2:#0f2540;--gd:#b8860b;--gdl:#fff8e7;--gdm:#f5efe0;
+  --gn:#1a6b3a;--gnb:#edf7f1;--rd:#c0392b;--rdb:#fdf0ee;
+  --or:#d35400;--orb:#fef5ec;--bl:#1a4a7a;--blb:#eef3fa;
+  --tx:#1a1a1a;--tx2:#3a3a3a;--mu:#7a7060;--mu2:#aaa090;
+  --sh:0 1px 4px rgba(0,0,0,.07),0 4px 16px rgba(0,0,0,.04);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--tx);font-family:'IBM Plex Sans',sans-serif;font-size:13px;line-height:1.5;}
+header{background:var(--nv2);color:#fff;position:sticky;top:0;z-index:300;box-shadow:0 2px 16px rgba(0,0,0,.3);}
+.h-top{display:flex;align-items:center;justify-content:space-between;padding:10px 22px;border-bottom:1px solid rgba(255,255,255,.08);}
+.logo-m{font-family:'Libre Baskerville',serif;font-size:19px;font-weight:700;color:#f0d080;letter-spacing:1px;}
+.logo-s{font-family:'IBM Plex Mono',monospace;font-size:8px;color:rgba(255,255,255,.3);text-transform:uppercase;letter-spacing:2px;margin-left:10px;}
+.hkpis{display:flex;}
+.hk{padding:2px 14px;border-right:1px solid rgba(255,255,255,.08);text-align:center;}
+.hk:last-child{border-right:none;}
+.hk-v{font-family:'IBM Plex Mono',monospace;font-size:16px;font-weight:500;color:#f0d080;display:block;}
+.hk-l{font-size:7px;text-transform:uppercase;letter-spacing:1px;color:rgba(255,255,255,.3);}
+.live-b{display:flex;align-items:center;gap:5px;font-family:'IBM Plex Mono',monospace;font-size:8px;color:rgba(255,255,255,.35);}
+.live-dot{width:6px;height:6px;border-radius:50%;background:#2ecc71;animation:blink 2s infinite;}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.25}}
+.nav-tabs{display:flex;padding:0 22px;background:rgba(0,0,0,.18);border-bottom:1px solid rgba(255,255,255,.05);}
+.ntab{padding:8px 18px;font-family:'IBM Plex Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:1px;color:rgba(255,255,255,.4);cursor:pointer;border-bottom:2px solid transparent;transition:all .2s;}
+.ntab:hover{color:rgba(255,255,255,.75);}
+.ntab.active{color:#f0d080;border-bottom-color:#f0d080;}
+.h-ctrl{display:flex;align-items:center;gap:6px;padding:6px 22px;background:rgba(0,0,0,.14);flex-wrap:wrap;}
+.fb{padding:3px 9px;border:1px solid rgba(255,255,255,.14);background:transparent;color:rgba(255,255,255,.48);font-family:'IBM Plex Mono',monospace;font-size:8px;cursor:pointer;border-radius:2px;transition:all .15s;text-transform:uppercase;}
+.fb:hover{background:rgba(255,255,255,.08);color:#fff;}
+.fb.active{background:var(--gd);border-color:var(--gd);color:#fff;font-weight:600;}
+.vsep{width:1px;height:14px;background:rgba(255,255,255,.1);margin:0 2px;}
+.spd{display:flex;align-items:center;gap:6px;margin-left:auto;font-family:'IBM Plex Mono',monospace;font-size:8px;color:rgba(255,255,255,.38);}
+.spd input[type=range]{-webkit-appearance:none;width:65px;height:2px;background:rgba(255,255,255,.15);outline:none;cursor:pointer;}
+.spd input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:9px;height:9px;border-radius:50%;background:#f0d080;cursor:pointer;}
+.cb{padding:3px 9px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.05);color:rgba(255,255,255,.65);font-family:'IBM Plex Mono',monospace;font-size:8px;cursor:pointer;border-radius:2px;transition:all .15s;}
+.cb:hover{background:rgba(255,255,255,.12);}
+.prog-wrap{height:2px;background:rgba(255,255,255,.05);}
+.prog-bar{height:100%;background:linear-gradient(90deg,#f0d080,var(--gd));transition:width .4s ease;}
+
+/* PAGES */
+.page{display:none;max-width:1400px;margin:0 auto;padding:16px 18px;}
+.page.active{display:block;}
+
+/* LAYOUT */
+.layout{display:grid;grid-template-columns:1fr 278px;gap:14px;align-items:start;}
+
+/* LOADER */
+.lcard{background:var(--wh);border:1px solid var(--bd);border-radius:4px;min-height:720px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;box-shadow:var(--sh);}
+.lbig{font-family:'Libre Baskerville',serif;font-size:54px;font-weight:700;color:var(--bd2);animation:breathe 1.4s ease-in-out infinite;}
+@keyframes breathe{0%,100%{opacity:.18}50%{opacity:.75}}
+.llbl{font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--mu2);text-transform:uppercase;letter-spacing:3px;}
+.llbl::after{content:'';animation:dots 1.2s steps(4,end) infinite;}
+@keyframes dots{0%{content:''}25%{content:'.'}50%{content:'..'}75%{content:'...'}100%{content:''}}
+
+/* FICHE */
+.fiche{background:var(--wh);border:1px solid var(--bd);border-radius:4px;box-shadow:var(--sh);overflow:hidden;animation:fu .3s ease;}
+@keyframes fu{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:translateY(0)}}
+.ftop{background:linear-gradient(135deg,var(--nv2) 0%,var(--nv) 100%);color:#fff;padding:16px 20px;display:flex;align-items:flex-start;gap:16px;}
+.ftkr{font-family:'Libre Baskerville',serif;font-size:42px;font-weight:700;color:#f0d080;line-height:1;min-width:100px;}
+.fmid{flex:1;}
+.fnm{font-size:15px;font-weight:600;color:#fff;margin-bottom:4px;}
+.ftags{display:flex;gap:4px;flex-wrap:wrap;}
+.tag{padding:2px 6px;border-radius:2px;font-family:'IBM Plex Mono',monospace;font-size:7px;letter-spacing:.3px;text-transform:uppercase;font-weight:500;}
+.t-sec{background:rgba(255,255,255,.09);color:rgba(255,255,255,.68);}
+.t-cap{background:rgba(240,208,128,.16);color:#f0d080;border:1px solid rgba(240,208,128,.28);}
+.t-pea{background:rgba(46,204,113,.16);color:#5ddb8a;border:1px solid rgba(46,204,113,.26);}
+.t-srd{background:rgba(255,160,80,.16);color:#ffaa60;border:1px solid rgba(255,160,80,.26);}
+.t-zone{background:rgba(26,107,58,.3);color:#5ddb8a;border:1px solid rgba(26,107,58,.4);animation:zpulse 2s infinite;}
+@keyframes zpulse{0%,100%{opacity:1}50%{opacity:.6}}
+.frt{text-align:right;}
+.fpr{font-family:'IBM Plex Mono',monospace;font-size:26px;font-weight:500;color:#fff;}
+.fch{font-family:'IBM Plex Mono',monospace;font-size:11px;margin-top:2px;}
+.flive{font-size:8px;color:rgba(255,255,255,.3);font-family:'IBM Plex Mono',monospace;margin-top:1px;}
+.fmk{font-size:8px;color:rgba(255,255,255,.3);margin-top:2px;font-family:'IBM Plex Mono',monospace;}
+.pos{color:#5ddb8a;}.neg{color:#ff7070;}.neu{color:rgba(255,255,255,.38);}
+
+/* VERDICT */
+.verdict{display:flex;align-items:stretch;border-bottom:2px solid var(--bd);}
+.vgrd{width:68px;display:flex;align-items:center;justify-content:center;font-family:'Libre Baskerville',serif;font-size:36px;font-weight:700;flex-shrink:0;}
+.gA{color:var(--gn);background:var(--gnb);}.gB{color:var(--gd);background:var(--gdm);}.gC{color:var(--or);background:var(--orb);}.gD{color:var(--rd);background:var(--rdb);}
+.vtxt{flex:1;padding:9px 14px;border-left:1px solid var(--bd);border-right:1px solid var(--bd);}
+.vhl{font-family:'Libre Baskerville',serif;font-size:13px;font-weight:700;margin-bottom:2px;}
+.vsb{font-size:9px;color:var(--mu);}
+.vrec{width:110px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.rb{padding:6px 9px;border-radius:3px;font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:600;text-align:center;text-transform:uppercase;line-height:1.4;}
+.rb-buy{background:var(--gnb);color:var(--gn);border:1.5px solid var(--gn);}
+.rb-watch{background:var(--gdm);color:var(--gd);border:1.5px solid var(--gd);}
+.rb-hold{background:var(--blb);color:var(--bl);border:1.5px solid var(--bl);}
+.rb-avoid{background:var(--rdb);color:var(--rd);border:1.5px solid var(--rd);}
+
+/* SECTION */
+.sec{padding:12px 18px;border-bottom:1px solid var(--bd);}
+.sec:last-child{border-bottom:none;}
+.sct{font-family:'IBM Plex Mono',monospace;font-size:7px;text-transform:uppercase;letter-spacing:2px;color:var(--mu2);margin-bottom:8px;display:flex;align-items:center;gap:7px;}
+.sct::after{content:'';flex:1;height:1px;background:var(--bd);}
+
+/* GRIDS */
+.mg5{display:grid;grid-template-columns:repeat(5,1fr);gap:5px;}
+.mg4{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;}
+.mg3{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;}
+.tc{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.tc3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;}
+
+/* METRIC BOX */
+.mb{border:1px solid var(--bd);border-radius:3px;padding:6px 8px;background:var(--sf);position:relative;overflow:hidden;}
+.mb::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;}
+.mb.good::before{background:var(--gn);}.mb.warn::before{background:var(--or);}.mb.bad::before{background:var(--rd);}.mb.nm::before{background:var(--mu2);}
+.ml{font-family:'IBM Plex Mono',monospace;font-size:7px;text-transform:uppercase;letter-spacing:.3px;color:var(--mu);margin-bottom:2px;}
+.mv{font-family:'IBM Plex Mono',monospace;font-size:14px;font-weight:500;color:var(--tx);line-height:1;}
+.ms{font-size:7px;color:var(--mu2);margin-top:1px;}
+
+/* ENTRY/EXIT */
+.ep{background:linear-gradient(135deg,#f0fff4,#fff8e7);border:1px solid var(--bd);border-radius:4px;padding:12px 14px;}
+.ep-g{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-bottom:10px;}
+.epb{text-align:center;padding:8px 6px;border-radius:3px;border:1px solid;}
+.ep-e{background:var(--gnb);border-color:rgba(26,107,58,.22);}
+.ep-s{background:var(--rdb);border-color:rgba(192,57,43,.22);}
+.ep-o{background:var(--blb);border-color:rgba(26,74,122,.22);}
+.ep-r{background:var(--gdm);border-color:rgba(184,134,11,.22);}
+.epv{font-family:'IBM Plex Mono',monospace;font-size:15px;font-weight:600;}
+.eplb{font-size:7px;text-transform:uppercase;letter-spacing:1px;margin-top:2px;}
+.eps{font-size:9px;color:var(--mu);margin-top:1px;}
+.ep-e .epv,.ep-e .eplb{color:var(--gn);}
+.ep-s .epv,.ep-s .eplb{color:var(--rd);}
+.ep-o .epv,.ep-o .eplb{color:var(--bl);}
+.ep-r .epv,.ep-r .eplb{color:var(--gd);}
+.sig-row{display:flex;align-items:center;gap:9px;padding:6px 8px;background:var(--sf);border:1px solid var(--bd);border-radius:3px;margin-top:6px;}
+.sig-lbl{font-family:'IBM Plex Mono',monospace;font-size:7px;text-transform:uppercase;letter-spacing:1px;color:var(--mu);width:80px;flex-shrink:0;}
+.sig-trk{flex:1;height:7px;background:linear-gradient(90deg,var(--rd) 0%,var(--or) 30%,#f0d080 55%,var(--gn) 100%);border-radius:4px;position:relative;}
+.sig-nd{position:absolute;top:-4px;width:14px;height:14px;background:var(--nv);border:2px solid #fff;border-radius:50%;transform:translateX(-50%);box-shadow:0 1px 4px rgba(0,0,0,.25);}
+.sig-val{font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;width:45px;text-align:right;}
+
+/* SCORES */
+.sr{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;}
+.sb{text-align:center;padding:7px;border:1px solid var(--bd);border-radius:3px;background:var(--sf);}
+.sbv{font-family:'Libre Baskerville',serif;font-size:22px;font-weight:700;}
+.sA{color:var(--gn);}.sB{color:var(--gd);}.sC{color:var(--or);}.sD{color:var(--rd);}.sN{color:var(--mu);}
+.sbl{font-family:'IBM Plex Mono',monospace;font-size:7px;text-transform:uppercase;letter-spacing:.8px;color:var(--mu);margin-top:1px;}
+.sbd{font-size:8px;color:var(--mu);margin-top:1px;}
+.mm-row{display:flex;gap:6px;margin-top:8px;}
+.mmb{flex:1;padding:6px 8px;border:1px solid var(--bd);border-radius:3px;background:var(--sf);text-align:center;}
+.mmv{font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:500;}
+.mml{font-size:7px;color:var(--mu);text-transform:uppercase;letter-spacing:.3px;}
+
+/* DCF */
+.dcfg{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;}
+.dcfb{border:1px solid var(--bd);border-radius:3px;padding:8px;background:var(--sf);text-align:center;}
+.dcfs{font-family:'IBM Plex Mono',monospace;font-size:7px;text-transform:uppercase;letter-spacing:.8px;color:var(--mu);margin-bottom:2px;}
+.dcfv{font-family:'IBM Plex Mono',monospace;font-size:15px;font-weight:500;}
+.dcfu{font-size:8px;font-family:'IBM Plex Mono',monospace;margin-top:2px;}
+
+/* MOAT */
+.mi{display:flex;align-items:center;gap:7px;padding:5px 0;border-bottom:1px solid var(--bd);font-size:11px;}
+.mi:last-child{border-bottom:none;}
+.mip{padding:1px 5px;border-radius:10px;font-family:'IBM Plex Mono',monospace;font-size:7px;font-weight:600;text-transform:uppercase;margin-left:auto;flex-shrink:0;}
+.mf{background:var(--gnb);color:var(--gn);}.mm2{background:var(--gdm);color:var(--gd);}.mw{background:var(--rdb);color:var(--rd);}
+
+/* CONSENSUS */
+.ctop{display:flex;justify-content:space-between;align-items:center;padding:6px 9px;background:var(--sf);border:1px solid var(--bd);border-radius:3px;margin-bottom:6px;}
+.cnv{font-family:'IBM Plex Mono',monospace;font-size:16px;font-weight:600;}
+.cnl{font-size:7px;color:var(--mu);text-transform:uppercase;letter-spacing:.4px;}
+.abar{display:flex;align-items:center;gap:7px;margin-bottom:4px;}
+.al{font-size:8px;color:var(--mu);width:50px;flex-shrink:0;font-family:'IBM Plex Mono',monospace;text-transform:uppercase;}
+.at{flex:1;height:6px;background:var(--bd);border-radius:3px;overflow:hidden;}
+.af{height:100%;border-radius:3px;}
+.ac{font-family:'IBM Plex Mono',monospace;font-size:8px;color:var(--mu);width:14px;text-align:right;}
+
+/* PEER */
+.pt{width:100%;border-collapse:collapse;font-size:10px;}
+.pt th{font-family:'IBM Plex Mono',monospace;font-size:7px;text-transform:uppercase;letter-spacing:.6px;color:var(--mu);text-align:right;padding:4px 6px;border-bottom:2px solid var(--bd);background:var(--sf);}
+.pt th:first-child{text-align:left;}
+.pt td{padding:4px 6px;border-bottom:1px solid var(--bd);text-align:right;font-family:'IBM Plex Mono',monospace;color:var(--tx2);}
+.pt td:first-child{text-align:left;font-family:'IBM Plex Sans',sans-serif;font-weight:500;color:var(--tx);}
+.pt tr.cur td{background:var(--gdm);font-weight:600;}
+.pt tr.cur td:first-child{color:var(--gd);}
+
+/* THESIS & CONTRA */
+.thesis{background:var(--gdm);border-left:3px solid var(--gd);padding:10px 12px;border-radius:0 3px 3px 0;font-family:'Libre Baskerville',serif;font-size:11px;font-style:italic;line-height:1.8;color:var(--tx2);margin-bottom:10px;}
+.contra{background:var(--rdb);border-left:3px solid var(--rd);padding:10px 12px;border-radius:0 3px 3px 0;font-size:11px;line-height:1.7;color:var(--tx2);}
+.contra-t{font-family:'IBM Plex Mono',monospace;font-size:7px;text-transform:uppercase;letter-spacing:2px;color:var(--rd);margin-bottom:5px;font-weight:600;}
+
+/* TRACK RECORD */
+.tr-i{display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--bd);font-size:11px;}
+.tr-i:last-child{border-bottom:none;}
+.try{font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;color:var(--mu);width:35px;flex-shrink:0;}
+.trp{flex:1;color:var(--tx2);}
+.trr{font-family:'IBM Plex Mono',monospace;font-size:10px;width:55px;text-align:right;}
+.trb{padding:1px 5px;border-radius:10px;font-family:'IBM Plex Mono',monospace;font-size:7px;font-weight:600;text-transform:uppercase;flex-shrink:0;}
+.tr-ok{background:var(--gnb);color:var(--gn);}.tr-p{background:var(--gdm);color:var(--gd);}.tr-m{background:var(--rdb);color:var(--rd);}
+.trs{background:var(--sf);border:1px solid var(--bd);border-radius:3px;padding:8px 10px;text-align:center;margin-bottom:8px;}
+.trs-v{font-family:'Libre Baskerville',serif;font-size:24px;font-weight:700;}
+.trs-l{font-size:8px;color:var(--mu);text-transform:uppercase;letter-spacing:1px;}
+
+/* CATALYSTS */
+.cat-i{display:flex;gap:7px;align-items:flex-start;padding:5px 0;border-bottom:1px solid var(--bd);font-size:11px;}
+.cat-i:last-child{border-bottom:none;}
+.cat-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;margin-top:4px;}
+.cat-w{font-family:'IBM Plex Mono',monospace;font-size:8px;color:var(--mu);width:55px;flex-shrink:0;}
+
+/* INSIDER */
+.ii{display:flex;align-items:center;gap:6px;padding:4px 0;border-bottom:1px solid var(--bd);font-size:10px;}
+.ii:last-child{border-bottom:none;}
+.it{padding:1px 4px;border-radius:2px;font-family:'IBM Plex Mono',monospace;font-size:7px;font-weight:600;text-transform:uppercase;flex-shrink:0;}
+.ita{background:var(--gnb);color:var(--gn);}.itv{background:var(--rdb);color:var(--rd);}
+.iw{flex:1;color:var(--tx2);}
+
+/* RISK */
+.rrow{display:flex;align-items:center;gap:7px;margin-bottom:5px;}
+.rrow:last-child{margin-bottom:0;}
+.rl{font-size:8px;color:var(--mu);width:85px;font-family:'IBM Plex Mono',monospace;text-transform:uppercase;letter-spacing:.2px;flex-shrink:0;}
+.rbar{flex:1;height:5px;background:var(--bd);border-radius:3px;overflow:hidden;}
+.rf{height:100%;border-radius:3px;}
+.rn{font-family:'IBM Plex Mono',monospace;font-size:8px;width:30px;text-align:right;}
+
+/* FOOTER */
+.ffoot{padding:6px 18px;background:var(--sf);border-top:1px solid var(--bd);display:flex;justify-content:space-between;}
+.fn{font-family:'IBM Plex Mono',monospace;font-size:7px;color:var(--mu2);}
+
+/* SIDEBAR */
+.side{display:flex;flex-direction:column;gap:12px;}
+.sc{background:var(--wh);border:1px solid var(--bd);border-radius:4px;box-shadow:var(--sh);overflow:hidden;}
+.sh{padding:7px 11px;border-bottom:1px solid var(--bd);font-family:'IBM Plex Mono',monospace;font-size:7px;text-transform:uppercase;letter-spacing:2px;color:var(--mu);background:var(--sf);display:flex;justify-content:space-between;align-items:center;}
+.ql{max-height:360px;overflow-y:auto;}
+.ql::-webkit-scrollbar{width:3px;}.ql::-webkit-scrollbar-thumb{background:var(--bd2);}
+.qi{display:flex;align-items:center;gap:6px;padding:5px 11px;border-bottom:1px solid rgba(226,221,214,.4);cursor:pointer;transition:background .12s;}
+.qi:hover{background:var(--sf);}
+.qi.active{background:var(--gdm);border-left:3px solid var(--gd);}
+.qi-n{font-family:'IBM Plex Mono',monospace;font-size:8px;color:var(--mu2);width:13px;}
+.qi-t{font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;color:var(--nv);width:40px;}
+.qi-nm{font-size:9px;color:var(--tx2);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.qg{width:16px;height:16px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Libre Baskerville',serif;font-size:8px;font-weight:700;flex-shrink:0;}
+.qA{background:var(--gnb);color:var(--gn);}.qB{background:var(--gdm);color:var(--gd);}.qC{background:var(--orb);color:var(--or);}.qD{background:var(--rdb);color:var(--rd);}
+.li{display:flex;gap:7px;align-items:flex-start;padding:5px 11px;border-bottom:1px solid var(--bd);}
+.li:last-child{border-bottom:none;}
+.lg{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Libre Baskerville',serif;font-size:11px;font-weight:700;flex-shrink:0;}
+.ld{font-size:9px;color:var(--mu);line-height:1.5;}
+.ld strong{color:var(--tx);}
+.ex-b{display:flex;flex-direction:column;gap:5px;padding:9px;}
+.eb{padding:7px 9px;border:1px solid var(--bd);background:var(--sf);color:var(--tx2);font-family:'IBM Plex Sans',sans-serif;font-size:10px;font-weight:500;cursor:pointer;border-radius:3px;display:flex;align-items:center;gap:6px;transition:all .15s;}
+.eb:hover{background:var(--nv);color:#fff;border-color:var(--nv);}
+.ei{font-size:13px;}
+.ed{font-size:8px;color:var(--mu);margin-top:1px;}
+.eb:hover .ed{color:rgba(255,255,255,.45);}
+
+/* RECAP TABLE */
+.rtbl{width:100%;border-collapse:collapse;font-size:10px;white-space:nowrap;}
+.rtbl th{position:sticky;top:0;z-index:10;background:var(--nv2);color:rgba(255,255,255,.65);font-family:'IBM Plex Mono',monospace;font-size:7px;text-transform:uppercase;letter-spacing:.3px;padding:6px 7px;text-align:right;border-right:1px solid rgba(255,255,255,.06);cursor:pointer;user-select:none;}
+.rtbl th:hover{background:var(--nv);}
+.rtbl th:first-child,.rtbl th:nth-child(2){text-align:left;}
+.rtbl td{padding:4px 7px;border-bottom:1px solid var(--bd);border-right:1px solid rgba(226,221,214,.4);text-align:right;font-family:'IBM Plex Mono',monospace;color:var(--tx2);}
+.rtbl td:first-child{font-weight:700;color:var(--nv);text-align:left;cursor:pointer;}
+.rtbl td:first-child:hover{color:var(--gd);}
+.rtbl td:nth-child(2){text-align:left;color:var(--tx);font-family:'IBM Plex Sans',sans-serif;font-size:11px;}
+.rtbl tr:hover td{background:var(--sf);}
+.rtbl tr.zone-row td{background:rgba(26,107,58,.04);}
+.rtg{display:inline-flex;width:17px;height:17px;border-radius:50%;align-items:center;justify-content:center;font-family:'Libre Baskerville',serif;font-size:8px;font-weight:700;}
+.recap-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px;}
+.recap-title{font-family:'Libre Baskerville',serif;font-size:18px;font-weight:700;color:var(--nv);}
+.tw{background:var(--wh);border:1px solid var(--bd);border-radius:4px;box-shadow:var(--sh);overflow:auto;max-height:calc(100vh - 190px);}
+
+/* LEXIQUE */
+.lex-search{width:100%;max-width:480px;padding:9px 13px;border:1px solid var(--bd);border-radius:4px;font-family:'IBM Plex Sans',sans-serif;font-size:13px;color:var(--tx);background:var(--wh);box-shadow:var(--sh);margin-bottom:16px;outline:none;}
+.lex-search:focus{border-color:var(--gd);box-shadow:0 0 0 3px rgba(184,134,11,.1);}
+.lex-cats{display:flex;gap:7px;margin-bottom:16px;flex-wrap:wrap;}
+.lcat{padding:4px 11px;border:1px solid var(--bd);background:var(--wh);color:var(--mu);font-family:'IBM Plex Mono',monospace;font-size:8px;text-transform:uppercase;letter-spacing:.8px;cursor:pointer;border-radius:2px;transition:all .15s;}
+.lcat:hover,.lcat.active{background:var(--nv);color:#fff;border-color:var(--nv);}
+.lex-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:10px;}
+.lcard2{background:var(--wh);border:1px solid var(--bd);border-radius:4px;padding:12px 14px;box-shadow:var(--sh);cursor:pointer;transition:all .15s;}
+.lcard2:hover{border-color:var(--gd);box-shadow:0 0 0 2px rgba(184,134,11,.1);}
+.lcard2.open{border-color:var(--nv);background:var(--sf);}
+.lterm{font-family:'Libre Baskerville',serif;font-size:13px;font-weight:700;color:var(--nv);margin-bottom:3px;}
+.lctag{display:inline-block;padding:1px 5px;border-radius:10px;font-family:'IBM Plex Mono',monospace;font-size:7px;text-transform:uppercase;letter-spacing:.4px;margin-bottom:5px;}
+.cv{background:var(--blb);color:var(--bl);}
+.cr{background:var(--gnb);color:var(--gn);}
+.ck{background:var(--rdb);color:var(--rd);}
+.ct{background:var(--orb);color:var(--or);}
+.cs{background:var(--gdm);color:var(--gd);}
+.ldef{font-size:11px;color:var(--tx2);line-height:1.6;}
+.ldetail{display:none;margin-top:7px;padding-top:7px;border-top:1px solid var(--bd);}
+.lcard2.open .ldetail{display:block;}
+.lform{background:var(--sf);border:1px solid var(--bd);border-radius:3px;padding:5px 9px;font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--nv);margin:5px 0;}
+.linterp{font-size:10px;color:var(--mu);line-height:1.6;font-style:italic;}
+.lex-good{color:var(--gn);font-weight:600;}.lex-warn{color:var(--or);font-weight:600;}.lex-bad{color:var(--rd);font-weight:600;}
+
+@media(max-width:900px){.layout{grid-template-columns:1fr;}.mg5{grid-template-columns:repeat(3,1fr);}.sr{grid-template-columns:repeat(2,1fr);}.tc{grid-template-columns:1fr;}.ep-g{grid-template-columns:repeat(2,1fr);}}
+@media print{header{position:static!important;}.side,.h-ctrl,.nav-tabs{display:none!important;}.layout{grid-template-columns:1fr;padding:0;}#pg-lx,#pg-tb,#pg-etf{display:none!important;}body{background:#fff;}}
+
+/* ETF */
+.etf-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:14px;}
+.etf-card{background:var(--wh);border:1px solid var(--bd);border-radius:4px;box-shadow:var(--sh);overflow:hidden;}
+.etf-top{background:linear-gradient(135deg,var(--nv2),var(--nv));color:#fff;padding:12px 16px;display:flex;align-items:flex-start;gap:12px;}
+.etf-tkr{font-family:'Libre Baskerville',serif;font-size:28px;font-weight:700;color:#f0d080;min-width:70px;line-height:1;}
+.etf-mid{flex:1;}
+.etf-name{font-size:13px;font-weight:600;color:#fff;margin-bottom:3px;}
+
+/* TradingView widget */
+.tv-wrap{margin:0;border-bottom:1px solid var(--bd);background:#000;height:320px;position:relative;}
+.tv-wrap iframe{width:100%;height:100%;border:none;display:block;}
+.tv-placeholder{display:flex;align-items:center;justify-content:center;height:100%;color:rgba(255,255,255,.3);font-family:'IBM Plex Mono',monospace;font-size:10px;flex-direction:column;gap:8px;}
+/* MM200 warning */
+.mm200-warn{background:linear-gradient(90deg,rgba(192,57,43,.12),transparent);border-left:3px solid var(--rd);padding:6px 12px;font-size:10px;color:var(--rd);display:flex;align-items:center;gap:6px;}
+.mm200-ok{background:linear-gradient(90deg,rgba(26,107,58,.08),transparent);border-left:3px solid var(--gn);padding:6px 12px;font-size:10px;color:var(--gn);display:flex;align-items:center;gap:6px;}
+.dow-signal{padding:4px 9px;border-radius:2px;font-family:'IBM Plex Mono',monospace;font-size:8px;font-weight:600;text-transform:uppercase;}
+.dow-bull{background:var(--gnb);color:var(--gn);border:1px solid rgba(26,107,58,.3);}
+.dow-bear{background:var(--rdb);color:var(--rd);border:1px solid rgba(192,57,43,.3);}
+.dow-neut{background:var(--gdm);color:var(--gd);border:1px solid rgba(184,134,11,.3);}
+</style>
+</head>
+<body>
+<header>
+  <div class="h-top">
+    <div><span class="logo-m">PEA SCREENER PRO</span><span class="logo-s">Cabinet Quantitatif · SBF 250 · Analyse Fondamentale</span></div>
+    <div class="hkpis">
+      <div class="hk"><span class="hk-v" id="hkT">0</span><span class="hk-l">Valeurs</span></div>
+      <div class="hk"><span class="hk-v" id="hkD">0</span><span class="hk-l">Analysées</span></div>
+      <div class="hk"><span class="hk-v" id="hkAB">0</span><span class="hk-l">⭐ A+B</span></div>
+      <div class="hk"><span class="hk-v" id="hkZ">0</span><span class="hk-l">📍 Zone achat</span></div>
+      <div class="hk"><span class="hk-v" id="hkP">0%</span><span class="hk-l">Cycle</span></div>
+    </div>
+    <div class="live-b"><div class="live-dot"></div><span id="live-st">Données indicatives</span></div>
+  </div>
+  <div class="nav-tabs">
+    <div class="ntab active" onclick="showPg('sc',this)">📊 Screener</div>
+    <div class="ntab" onclick="showPg('tb',this)">📋 Tableau</div>
+    <div class="ntab" onclick="showPg('lx',this)">📖 Lexique</div>
+    <div class="ntab" onclick="showPg('etf',this)">🌍 ETF PEA</div>
+  </div>
+  <div class="h-ctrl">
+    <button class="fb active" onclick="filt('all',this)">Tout</button>
+    <button class="fb" onclick="filt('large',this)">Large</button>
+    <button class="fb" onclick="filt('mid',this)">Mid</button>
+    <button class="fb" onclick="filt('small',this)">Small</button>
+    <div class="vsep"></div>
+    <button class="fb" onclick="filt('srd',this)">SRD</button>
+    <button class="fb" onclick="filt('A',this)">🏆 Grade A</button>
+    <button class="fb" onclick="filt('buy',this)">🎯 Acheter</button>
+    <button class="fb" onclick="filt('rend',this)">💰 Rdt 5%+</button>
+    <button class="fb" onclick="filt('zone',this)">📍 Zone achat</button>
+    <div class="vsep"></div>
+    <div class="spd">
+      <span>Vitesse</span>
+      <input type="range" min="5" max="60" value="18" id="spR" oninput="setSpd(this.value)">
+      <span id="spL">18s</span>
+      <button class="cb" id="pbtn" onclick="tPause()">⏸ Pause</button>
+    </div>
+  </div>
+  <div class="prog-wrap"><div class="prog-bar" id="pgb" style="width:0%"></div></div>
+</header>
+
+<!-- PAGE SCREENER -->
+<div class="page active" id="pg-sc">
+  <div class="layout">
+    <div>
+      <div class="lcard" id="lc"><div class="lbig" id="lt">—</div><div class="llbl">Analyse fondamentale en cours</div></div>
+      <div class="fiche" id="fiche" style="display:none"></div>
+    </div>
+    <div class="side">
+      <div class="sc">
+        <div class="sh"><span>File d'analyse</span><span id="qcnt" style="font-size:8px;color:var(--mu)"></span></div>
+        <div class="ql" id="ql"></div>
+      </div>
+      <div class="sc">
+        <div class="sh">Notation</div>
+        <div class="li"><div class="lg qA">A</div><div class="ld"><strong>Pépite</strong> — Fondamentaux excellents, moat fort, thèse convaincante</div></div>
+        <div class="li"><div class="lg qB">B</div><div class="ld"><strong>Qualité</strong> — Bonne société, risques identifiés, potentiel réel</div></div>
+        <div class="li"><div class="lg qC">C</div><div class="ld"><strong>Neutre</strong> — Valorisation tendue, attendre point d'entrée</div></div>
+        <div class="li"><div class="lg qD">D</div><div class="ld"><strong>Éviter</strong> — Bilan fragile, thèse non convaincante</div></div>
+      </div>
+      <div class="sc">
+        <div class="sh">Exports & Outils</div>
+        <div class="ex-b">
+          <button class="eb" onclick="xls()"><span class="ei">📊</span><div><div>Export Excel</div><div class="ed">6 onglets · Tous ratios · Entrée/Sortie</div></div></button>
+          <button class="eb" onclick="pdfFiche()"><span class="ei">📄</span><div><div>PDF Fiche courante</div><div class="ed">Imprimer / Enregistrer PDF</div></div></button>
+          <button class="eb" onclick="window.print()"><span class="ei">📄</span><div><div>Imprimer / PDF</div><div class="ed">Fiche courante · Optimisé</div></div></button>
+          <button class="eb" onclick="showPg('tb',document.querySelectorAll('.ntab')[1])"><span class="ei">📋</span><div><div>Tableau comparatif</div><div class="ed">Toutes valeurs · Tri multi-colonnes</div></div></button>
+          <button class="eb" onclick="showPg('lx',document.querySelectorAll('.ntab')[2])"><span class="ei">📖</span><div><div>Lexique</div><div class="ed">80+ termes expliqués</div></div></button>
+          <button class="eb" onclick="fetchLive()"><span class="ei">🔄</span><div><div>Actualiser prix</div><div class="ed">Yahoo Finance (temps réel)</div></div></button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PAGE TABLEAU -->
+<div class="page" id="pg-tb">
+  <div class="recap-hd">
+    <div class="recap-title">Tableau Comparatif — CAC 40 · SBF 120 · SRD · PEA</div>
+    <div style="display:flex;gap:5px;flex-wrap:wrap;">
+      <button class="fb active" onclick="tf('all',this)">Tout</button>
+      <button class="fb" onclick="tf('A',this)">Grade A</button>
+      <button class="fb" onclick="tf('AB',this)">A+B</button>
+      <button class="fb" onclick="tf('buy',this)">Acheter</button>
+      <button class="fb" onclick="tf('zone',this)">📍 Zone achat</button>
+      <button class="fb" onclick="tf('rend',this)">Rdt 5%+</button>
+    </div>
+  </div>
+  <div class="tw">
+    <table class="rtbl" id="rtbl">
+      <thead><tr>
+        <th onclick="srt('ticker')">Ticker ⇅</th><th onclick="srt('name')">Société</th>
+        <th onclick="srt('score')">Note</th><th onclick="srt('rec')">Rec.</th>
+        <th onclick="srt('price')">Cours</th><th onclick="srt('entry_low')">Zone entrée</th>
+        <th onclick="srt('stop')">Stop</th><th onclick="srt('obj1')">Obj.1</th>
+        <th onclick="srt('rr')">R/R</th><th onclick="srt('dcf_base')">DCF</th>
+        <th onclick="srt('upside')">Upside</th>
+        <th onclick="srt('pe')">P/E</th><th onclick="srt('pb')">P/B</th>
+        <th onclick="srt('ev_ebitda')">EV/EBITDA</th><th onclick="srt('ps')">P/S</th>
+        <th onclick="srt('roe')">ROE%</th><th onclick="srt('roic')">ROIC%</th><th onclick="srt('roa')">ROA%</th>
+        <th onclick="srt('debt')">Dett/EBITDA</th><th onclick="srt('ic')">Int.Cov.</th>
+        <th onclick="srt('yield')">Div%</th><th onclick="srt('margin')">Mg Nette%</th>
+        <th onclick="srt('gross_margin')">Mg Brute%</th><th onclick="srt('fcf')">FCF%</th>
+        <th onclick="srt('capex_rev')">CAPEX/CA%</th>
+        <th onclick="srt('eps_growth')">BPA%</th>
+        <th onclick="srt('piotroski')">Piotr.</th><th onclick="srt('altman')">Altman</th>
+        <th onclick="srt('rsi')">RSI</th><th onclick="srt('cap')">Cap</th>
+      </tr></thead>
+      <tbody id="rtbody"></tbody>
+    </table>
+  </div>
+</div>
+
+
+<!-- PAGE ETF -->
+<div class="page" id="pg-etf">
+  <div style="margin-bottom:16px;">
+    <h2 style="font-family:'Libre Baskerville',serif;font-size:20px;font-weight:700;color:var(--nv);margin-bottom:5px;">🌍 ETF PEA — Sélection & Analyse</h2>
+    <p style="color:var(--mu);font-size:11px;">Les meilleurs ETF pour un PEA optimisé. Priorité : capitalisants, frais minimaux, diversification maximale. Attention ⚠️ = non éligible PEA (compte-titres uniquement).</p>
+    <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;">
+      <div style="padding:6px 12px;background:var(--gnb);border:1px solid rgba(26,107,58,.2);border-radius:3px;font-size:10px;color:var(--gn)">✅ <b>Synthétique</b> = Éligible PEA</div>
+      <div style="padding:6px 12px;background:var(--blb);border:1px solid rgba(26,74,122,.2);border-radius:3px;font-size:10px;color:var(--bl)">📋 <b>Physique</b> = Compte-titres préférable</div>
+      <div style="padding:6px 12px;background:var(--gdm);border:1px solid rgba(184,134,11,.2);border-radius:3px;font-size:10px;color:var(--gd)">💡 <b>Stratégie optimale</b> : CW8 (60%) + PAEEM (15%) + PANX (15%) + Cash (10%)</div>
+    </div>
+  </div>
+  <div class="etf-grid" id="etf-grid"></div>
+</div>
+
+<!-- PAGE LEXIQUE -->
+<div class="page" id="pg-lx">
+  <div style="margin-bottom:20px;">
+    <h2 style="font-family:'Libre Baskerville',serif;font-size:20px;font-weight:700;color:var(--nv);margin-bottom:5px;">Lexique Financier — PEA Screener Pro</h2>
+    <p style="color:var(--mu);font-size:11px;">80+ termes expliqués simplement avec formules, seuils d'interprétation et exemples. Cliquer sur un terme pour développer.</p>
+  </div>
+  <input class="lex-search" type="text" placeholder="🔍 Rechercher... (P/E, ROIC, Moat, Piotroski, CAPEX...)" oninput="filterLex(this.value)">
+  <div class="lex-cats">
+    <button class="lcat active" onclick="filterLexCat('all',this)">Tous</button>
+    <button class="lcat" onclick="filterLexCat('v',this)">Valorisation</button>
+    <button class="lcat" onclick="filterLexCat('r',this)">Rentabilité</button>
+    <button class="lcat" onclick="filterLexCat('k',this)">Risque & Solidité</button>
+    <button class="lcat" onclick="filterLexCat('t',this)">Analyse Technique</button>
+    <button class="lcat" onclick="filterLexCat('s',this)">Stratégie & Structure</button>
+  </div>
+  <div class="lex-grid" id="lex-grid"></div>
+</div>
+
+<script>
+// ═══════════ DATA ═══════════
+const S=[
+// ══ CAC 40 ══
+{ticker:'MC',name:'LVMH',sector:'Luxe',cap:'large',srd:true,idx:'CAC40',
+ price:553,chg:-1.2,mkt:'278Md€',b52h:720,b52l:450,beta:1.1,
+ pe:22,pb:5.1,ev_ebitda:14,ps:3.8,pfcf:18,ev_ebit:16,
+ roe:24,roic:19,roa:12,debt:0.8,de:1.2,ic:8.5,cr:1.4,qr:1.1,
+ yield:2.4,epsg:8,revg:6,margin:18,gm:68,om:26,fcf:7.2,
+ capex:2.8,capr:4.2,capda:0.6,
+ dcfb:450,dcfm:620,dcfu:780,
+ pio:7,alt:4.2,rsi:38,mm50:580,mm200:595,
+ el:480,eh:540,stop:430,o1:640,o2:720,
+ cb:18,ch:6,cs:2,tp:650,score:'B',rec:'watch',zone:true,
+ moat:[['75 maisons iconiques','fort'],['Pricing power','fort'],['Distribution mondiale','fort']],
+ cats:[{t:'Rebond luxe Chine 2026',w:'T2 2026',c:'var(--gn)'},{t:'Dividende 13€/action',w:'Avr 2026',c:'var(--gd)'}],
+ ins:[['Achat','Famille Arnault','250M€','Fév 2026']],
+ peers:[{n:'Hermès',pe:50,pb:22,roe:36,div:0.6,evebitda:32},{n:'Kering',pe:14,pb:2.1,roe:15,div:4.2,evebitda:9}],
+ risks:{Chine:65,Devise:45,Cyclicité:55,Réglementation:25,Disruption:20,Liquidité:10},
+ track:[{y:'2025',p:'Croissance organique +5%',ok:'ok'},{y:'2024',p:'Résilience malgré Chine',ok:'partial'}],
+ thesis:"LVMH reste l'actif de luxe le plus diversifié au monde. À 22x PE sur un creux de cycle, le risque/rendement redevient attractif. La famille Arnault a passé les 50% du capital — signal fort de conviction à long terme.",
+ contra:"La Chine représente 27% des ventes dans un contexte de nationalisme consommateur croissant. La résistance au pricing power s'installe après +40% de hausses post-COVID. La correction depuis 900€ en 2023 n'est peut-être pas terminée."},
+
+{ticker:'AI',name:'Air Liquide',sector:'Gaz industriels',cap:'large',srd:true,idx:'CAC40',
+ price:158,chg:0.3,mkt:'74Md€',b52h:175,b52l:138,beta:0.6,
+ pe:26,pb:4.2,ev_ebitda:16,ps:3.1,pfcf:22,ev_ebit:19,
+ roe:16,roic:12,roa:8,debt:1.8,de:0.8,ic:8.2,cr:1.2,qr:0.9,
+ yield:2.1,epsg:9,revg:7,margin:13,gm:34,om:18,fcf:5.8,
+ capex:8.2,capr:12.4,capda:1.1,
+ dcfb:130,dcfm:168,dcfu:200,
+ pio:7,alt:3.8,rsi:48,mm50:156,mm200:152,
+ el:145,eh:162,stop:132,o1:178,o2:195,
+ cb:14,ch:8,cs:1,tp:175,score:'A',rec:'buy',zone:true,
+ moat:[['Contrats take-or-pay 15-20 ans','fort'],['Infrastructure impossible à dupliquer','fort'],['Position hydrogène','modéré']],
+ cats:[{t:'Hydrogène vert accélération',w:'2026-2028',c:'var(--gn)'},{t:'Investissement Moyen-Orient',w:'T3 2026',c:'var(--gd)'}],
+ ins:[['Achat','Benoît Potier','2.1M€','Jan 2026']],
+ peers:[{n:'Linde',pe:30,pb:5.8,roe:18,div:1.4,evebitda:20},{n:'Air Products',pe:25,pb:4.5,roe:14,div:2.8,evebitda:17}],
+ risks:{Devise:35,Cyclicité:30,Réglementation:40,Hydrogène:45,Énergie:50,Liquidité:15},
+ track:[{y:'2025',p:'BPA +9% objectif',ok:'ok'},{y:'2024',p:'30ème hausse consécutive dividende',ok:'ok'}],
+ thesis:"Air Liquide est l'infrastructure invisible de l'industrie mondiale. 29 années consécutives de hausse du dividende. Les contrats long terme (15-20 ans take-or-pay) rendent les cash flows quasi-certains. Position idéale sur la transition hydrogène.",
+ contra:"Valorisation premium justifiée mais limitant le potentiel de rerating. CAPEX très lourd (12.4% CA) pour financer la croissance hydrogène dont le retour reste incertain. Sensibilité aux prix de l'énergie."},
+
+{ticker:'OR',name:"L'Oréal",sector:'Cosmétiques',cap:'large',srd:true,idx:'CAC40',
+ price:342,chg:-0.3,mkt:'183Md€',b52h:420,b52l:310,beta:0.7,
+ pe:32,pb:8.4,ev_ebitda:21,ps:4.8,pfcf:28,ev_ebit:24,
+ roe:22,roic:18,roa:14,debt:0.2,de:0.4,ic:15.2,cr:1.6,qr:1.4,
+ yield:2.4,epsg:6,revg:5,margin:19,gm:74,om:22,fcf:7.8,
+ capex:3.2,capr:4.8,capda:0.5,
+ dcfb:295,dcfm:380,dcfu:460,
+ pio:9,alt:5.1,rsi:42,mm50:355,mm200:368,
+ el:315,eh:348,stop:290,o1:398,o2:440,
+ cb:20,ch:4,cs:1,tp:410,score:'A',rec:'buy',zone:true,
+ moat:[['37 marques couvrant tous segments','fort'],['R&D dermatologique','fort'],['Distribution omnicanale','fort']],
+ cats:[{t:'Rebond marché beauté premium Chine',w:'T2 2026',c:'var(--gn)'},{t:'Lancement Skin Longevity',w:'T1 2026',c:'var(--gd)'}],
+ ins:[['Achat','Famille Bettencourt','890M€','Déc 2025']],
+ peers:[{n:'Estée Lauder',pe:28,pb:12,roe:30,div:2.1,evebitda:18},{n:'Shiseido',pe:35,pb:3.2,roe:9,div:1.8,evebitda:14}],
+ risks:{Chine:60,Devise:45,Cyclicité:35,Disruption:40,Réglementation:30,Liquidité:10},
+ track:[{y:'2025',p:'Croissance organique +5.1%',ok:'ok'},{y:'2024',p:'Leadership marché maintenu',ok:'ok'}],
+ thesis:"L'Oréal capte la montée en gamme mondiale avec une couverture prix inégalée. Aucun concurrent ne combine R&D dermatologique, distribution omnicanale et 37 marques. Le vieillissement de la population mondiale est un vent porteur structurel.",
+ contra:"32x PE pour une croissance qui ralentit. La Chine ralentit. Les marques DTC gagnent des parts. À 342€, la marge de sécurité est faible malgré la qualité des fondamentaux."},
+
+{ticker:'SAN',name:'Sanofi',sector:'Pharmacie',cap:'large',srd:true,idx:'CAC40',
+ price:98,chg:0.5,mkt:'124Md€',b52h:115,b52l:82,beta:0.5,
+ pe:18,pb:2.8,ev_ebitda:13,ps:2.4,pfcf:16,ev_ebit:15,
+ roe:16,roic:12,roa:8,debt:0.6,de:0.5,ic:12.4,cr:1.8,qr:1.5,
+ yield:4.1,epsg:12,revg:8,margin:16,gm:72,om:20,fcf:7.2,
+ capex:3.8,capr:7.4,capda:0.8,
+ dcfb:85,dcfm:112,dcfu:140,
+ pio:7,alt:4.5,rsi:52,mm50:96,mm200:92,
+ el:88,eh:102,stop:80,o1:118,o2:135,
+ cb:16,ch:5,cs:2,tp:120,score:'B',rec:'buy',zone:true,
+ moat:[['Dupixent monopole IL-4/IL-13','fort'],['Pipeline vaccins','modéré'],['Scale mondiale','modéré']],
+ cats:[{t:'Dupixent nouvelles indications',w:'T2 2026',c:'var(--gn)'},{t:'Cession Opella finalisée',w:'T1 2026',c:'var(--gd)'}],
+ ins:[['Achat','CEO Paul Hudson','1.8M€','Jan 2026']],
+ peers:[{n:'Novartis',pe:16,pb:4.1,roe:24,div:3.8,evebitda:12},{n:'AstraZeneca',pe:22,pb:6.2,roe:28,div:2.1,evebitda:16}],
+ risks:{Pipeline:55,Devise:40,Réglementation:45,Concentration:60,Biosimilaires:50,Liquidité:15},
+ track:[{y:'2025',p:'Dupixent 13Md€ revenus',ok:'ok'},{y:'2024',p:'Spin-off Opella',ok:'partial'}],
+ thesis:"Dupixent est l'un des médicaments les plus importants du monde — 13Md$ de revenus sur une maladie chronique sans alternative. À 18x PE avec 4.1% de dividende, le marché ne valorise pas le pipeline. La cession Opella déverrouille de la valeur.",
+ contra:"Dupixent = 40% des revenus : concentration dangereuse. Expirations de brevets sur produits matures. R&D historiquement décevante sur 10 ans. CAPEX pharma lourd avec retours incertains."},
+
+{ticker:'TTE',name:'TotalEnergies',sector:'Énergie',cap:'large',srd:true,idx:'CAC40',
+ price:58,chg:-0.8,mkt:'146Md€',b52h:68,b52l:52,beta:0.9,
+ pe:8,pb:1.4,ev_ebitda:5,ps:0.6,pfcf:7,ev_ebit:6,
+ roe:14,roic:11,roa:7,debt:1.2,de:0.4,ic:18.5,cr:1.3,qr:1.0,
+ yield:5.2,epsg:3,revg:2,margin:8,gm:28,om:12,fcf:9.8,
+ capex:14.2,capr:5.8,capda:0.7,
+ dcfb:48,dcfm:72,dcfu:95,
+ pio:7,alt:3.2,rsi:44,mm50:60,mm200:62,
+ el:53,eh:61,stop:48,o1:70,o2:80,
+ cb:14,ch:5,cs:3,tp:72,score:'B',rec:'buy',zone:true,
+ moat:[['Intégration amont-aval','modéré'],['Actifs LNG de classe mondiale','fort'],['Transition énergétique avancée','modéré']],
+ cats:[{t:'LNG Canada pleine production',w:'T2 2026',c:'var(--gn)'},{t:'Rachat actions 2Md$/trim.',w:'Continu',c:'var(--gd)'}],
+ ins:[['Achat','CEO Pouyanné','3.2M€','Jan 2026']],
+ peers:[{n:'Shell',pe:9,pb:1.3,roe:13,div:4.8,evebitda:5},{n:'BP',pe:8,pb:1.1,roe:11,div:5.2,evebitda:4}],
+ risks:{Pétrole:75,Transition:65,Géopolitique:55,Réglementation:50,Devise:35,Liquidité:10},
+ track:[{y:'2025',p:'Dividende maintenu 5.2%',ok:'ok'},{y:'2024',p:'LNG Canada opérationnel',ok:'ok'}],
+ thesis:"TotalEnergies est la major la plus avancée dans la transition. À 8x PE et 5.2% de yield avec LNG Canada opérationnel, la valorisation intègre un scénario catastrophiste. Le rachat d'actions massif soutient le cours.",
+ contra:"Le pétrole à 60$ détruit la thèse si ça dure. La transition vers les ENR consomme du capital sans retour immédiat. Risque géopolitique moyen-orient permanent."},
+
+{ticker:'SAF',name:'Safran',sector:'Aéronautique',cap:'large',srd:true,idx:'CAC40',
+ price:248,chg:0.4,mkt:'112Md€',b52h:275,b52l:198,beta:0.8,
+ pe:32,pb:8.2,ev_ebitda:20,ps:3.8,pfcf:26,ev_ebit:22,
+ roe:28,roic:22,roa:12,debt:0.5,de:0.6,ic:14.2,cr:1.5,qr:1.2,
+ yield:1.0,epsg:18,revg:14,margin:15,gm:38,om:19,fcf:7.8,
+ capex:4.2,capr:6.8,capda:0.7,
+ dcfb:210,dcfm:270,dcfu:330,
+ pio:8,alt:4.8,rsi:55,mm50:245,mm200:232,
+ el:225,eh:255,stop:200,o1:285,o2:320,
+ cb:18,ch:5,cs:1,tp:280,score:'A',rec:'buy',zone:true,
+ moat:[['LEAP duopole Airbus/Boeing','fort'],['Services MRO récurrents','fort'],['Barrières entrée titanesques','fort']],
+ cats:[{t:'Montée en cadence LEAP 2200/mois',w:'2026',c:'var(--gn)'},{t:'CFM RISE programme',w:'2030+',c:'var(--gd)'}],
+ ins:[['Achat','CEO Castaing','4.1M€','Fév 2026']],
+ peers:[{n:'GE Aerospace',pe:38,pb:18,roe:45,div:0.8,evebitda:24},{n:'Rolls-Royce',pe:28,pb:15,roe:38,div:0.5,evebitda:18}],
+ risks:{Airbus:50,Devise:55,Supply:45,Technologie:35,Géopolitique:30,Liquidité:10},
+ track:[{y:'2025',p:'BPA +18% objectif',ok:'ok'},{y:'2024',p:'Carnet commandes record',ok:'ok'}],
+ thesis:"Safran est l'actif aéronautique le plus désirable de la cote française. Le moteur LEAP équipe 70% des moyen-courriers mondiaux avec un carnet de services MRO qui court sur 30 ans. Duopole mondial inattaquable.",
+ contra:"Valorisation exigeante à 32x PE. Forte dépendance Airbus (50% CA). Supply chain sous tension. Baisse USD pénalise les revenus de services libellés en dollars."},
+
+{ticker:'SU',name:'Schneider Electric',sector:'Énergie & Automatisation',cap:'large',srd:true,idx:'CAC40',
+ price:238,chg:0.8,mkt:'136Md€',b52h:265,b52l:185,beta:1.0,
+ pe:28,pb:6.8,ev_ebitda:18,ps:3.6,pfcf:22,ev_ebit:20,
+ roe:26,roic:20,roa:11,debt:1.0,de:0.7,ic:11.8,cr:1.4,qr:1.1,
+ yield:1.5,epsg:15,revg:12,margin:15,gm:44,om:18,fcf:7.5,
+ capex:3.8,capr:5.2,capda:0.6,
+ dcfb:195,dcfm:255,dcfu:315,
+ pio:8,alt:4.6,rsi:58,mm50:232,mm200:218,
+ el:210,eh:248,stop:188,o1:268,o2:300,
+ cb:20,ch:4,cs:1,tp:270,score:'A',rec:'buy',zone:true,
+ moat:[['Data center électrification','fort'],['Ecosystème EcoStruxure','fort'],['Transition énergétique','fort']],
+ cats:[{t:'Data centers IA explosion',w:'2026-2028',c:'var(--gn)'},{t:'Grids renovation Europe',w:'2026',c:'var(--gd)'}],
+ ins:[['Achat','CEO Cigna','5.2M€','Jan 2026']],
+ peers:[{n:'ABB',pe:25,pb:5.8,roe:22,div:2.0,evebitda:16},{n:'Siemens',pe:22,pb:4.5,roe:18,div:2.8,evebitda:14}],
+ risks:{Cyclicité:45,Devise:50,Concurrence:40,Supply:35,Réglementation:25,Liquidité:10},
+ track:[{y:'2025',p:'Croissance organique +12%',ok:'ok'},{y:'2024',p:'Data center +30%',ok:'ok'}],
+ thesis:"Schneider est au centre de trois mégatendances simultanées : électrification, digitalisation, data centers IA. La demande en énergie des data centers double tous les 4 ans — Schneider équipe 40% d'entre eux.",
+ contra:"Valorisation premium élevée. Cyclicité des marchés industriels. Forte exposition USD. Concurrence croissante d'ABB et Siemens sur les segments IA."},
+
+{ticker:'DSY',name:'Dassault Systèmes',sector:'Logiciels',cap:'large',srd:true,idx:'CAC40',
+ price:32,chg:-0.5,mkt:'42Md€',b52h:42,b52l:28,beta:1.1,
+ pe:28,pb:5.2,ev_ebitda:18,ps:4.8,pfcf:24,ev_ebit:20,
+ roe:18,roic:15,roa:10,debt:0.4,de:0.5,ic:12.5,cr:2.1,qr:1.8,
+ yield:0.6,epsg:12,revg:10,margin:20,gm:82,om:24,fcf:8.2,
+ capex:1.8,capr:2.8,capda:0.4,
+ dcfb:28,dcfm:38,dcfu:48,
+ pio:7,alt:4.2,rsi:42,mm50:33,mm200:36,
+ el:29,eh:34,stop:26,o1:40,o2:46,
+ cb:15,ch:7,cs:2,tp:42,score:'B',rec:'watch',zone:true,
+ moat:[['3DEXPERIENCE platform','fort'],['Switching costs','fort'],['Life sciences vertical','fort']],
+ cats:[{t:'IA intégrée 3DEXPERIENCE',w:'2026',c:'var(--gn)'},{t:'Life sciences expansion',w:'2026-2027',c:'var(--gd)'}],
+ ins:[['Achat','Famille Dassault','180M€','Déc 2025']],
+ peers:[{n:'PTC',pe:32,pb:8,roe:25,div:0.0,evebitda:22},{n:'Autodesk',pe:35,pb:12,roe:40,div:0.0,evebitda:26}],
+ risks:{Cyclicité:50,Concurrence:55,Devise:45,Cloud:40,Croissance:35,Liquidité:15},
+ track:[{y:'2025',p:'Revenus récurrents 80%+',ok:'ok'},{y:'2024',p:'Life sciences 25% CA',ok:'partial'}],
+ thesis:"Dassault Systèmes construit le jumeau numérique de l'industrie mondiale. La plateforme 3DEXPERIENCE est inextricablement liée aux processus de conception de ses clients. À 32€, correction significative depuis 42€ — point d'entrée intéressant.",
+ contra:"La transition vers le cloud a été plus lente que prévu. Concurrence de Siemens PLM et PTC sur certains segments. Croissance en dessous des attentes sur les 18 derniers mois."},
+
+{ticker:'BNP',name:'BNP Paribas',sector:'Banque',cap:'large',srd:true,idx:'CAC40',
+ price:68,chg:0.6,mkt:'83Md€',b52h:78,b52l:55,beta:1.3,
+ pe:7,pb:0.7,ev_ebitda:999,ps:1.2,pfcf:999,ev_ebit:999,
+ roe:10,roic:999,roa:0.5,debt:999,de:9.8,ic:999,cr:999,qr:999,
+ yield:7.8,epsg:5,revg:4,margin:28,gm:999,om:999,fcf:999,
+ capex:1.2,capr:999,capda:999,
+ dcfb:60,dcfm:80,dcfu:98,
+ pio:6,alt:999,rsi:52,mm50:66,mm200:62,
+ el:60,eh:70,stop:54,o1:80,o2:92,
+ cb:12,ch:4,cs:2,tp:82,score:'B',rec:'buy',zone:true,
+ moat:[['Franchise banque universelle européenne','modéré'],['CIB top 5 mondial','fort'],['Réseau retail 30 pays','modéré']],
+ cats:[{t:'Hausse des taux favorable NII',w:'2026',c:'var(--gn)'},{t:'Rachat actions en cours',w:'2026',c:'var(--gd)'}],
+ ins:[['Achat','CEO Bonnafé','2.8M€','Jan 2026']],
+ peers:[{n:'Société Générale',pe:6,pb:0.4,roe:8,div:8.2,evebitda:999},{n:'Deutsche Bank',pe:7,pb:0.5,roe:9,div:4.8,evebitda:999}],
+ risks:{Crédit:60,Régulation:65,Taux:50,Géopolitique:45,Technologie:40,Liquidité:20},
+ track:[{y:'2025',p:'ROE 11%',ok:'ok'},{y:'2024',p:'Dividende 4.60€',ok:'ok'}],
+ thesis:"BNP Paribas se traite à 0.7x la valeur comptable pour une banque qui génère 10% de ROE en environnement de taux favorable. Le dividende de 7.8% est soutenable avec un payout ratio de 55%. La décote sur actifs nets est anormalement élevée.",
+ contra:"Les banques européennes souffrent d'une décote structurelle. Exposition aux risques réglementaires Basel IV. Le CIB est pro-cyclique. La digitalisation menace les marges retail."},
+
+{ticker:'ACA',name:'Crédit Agricole',sector:'Banque',cap:'large',srd:true,idx:'CAC40',
+ price:14.5,chg:0.4,mkt:'38Md€',b52h:17.2,b52l:12.1,beta:1.1,
+ pe:6,pb:0.6,ev_ebitda:999,ps:0.9,pfcf:999,ev_ebit:999,
+ roe:11,roic:999,roa:0.6,debt:999,de:8.5,ic:999,cr:999,qr:999,
+ yield:8.2,epsg:4,revg:3,margin:24,gm:999,om:999,fcf:999,
+ capex:0.8,capr:999,capda:999,
+ dcfb:12,dcfm:17,dcfu:22,
+ pio:6,alt:999,rsi:48,mm50:14.8,mm200:14.2,
+ el:12.5,eh:15.2,stop:11.2,o1:17.5,o2:20,
+ cb:10,ch:5,cs:2,tp:18,score:'B',rec:'buy',zone:true,
+ moat:[['Réseau mutualiste unique','modéré'],['Assurance LCL intégrée','modéré'],['Agri financement leader','fort']],
+ cats:[{t:'Dividende 8.2% soutenable',w:'2026',c:'var(--gn)'},{t:'Amundi synergies',w:'2026',c:'var(--gd)'}],
+ ins:[['Achat','Direction CA','1.2M€','Fév 2026']],
+ peers:[{n:'BNP Paribas',pe:7,pb:0.7,roe:10,div:7.8,evebitda:999},{n:'BPCE',pe:6,pb:0.5,roe:9,div:6.5,evebitda:999}],
+ risks:{Crédit:55,Régulation:60,Taux:45,Agricole:35,Immobilier:50,Liquidité:20},
+ track:[{y:'2025',p:'Résultat net 7Md€',ok:'ok'},{y:'2024',p:'Dividende maintenu',ok:'ok'}],
+ thesis:"Crédit Agricole est la banque européenne la moins chère avec le rendement le plus élevé. La structure mutualiste protège contre les OPA hostiles et crée de la stabilité. Amundi (asset management) est une mine d'or insuffisamment valorisée.",
+ contra:"Structure mutualiste complexe et opaque. Exposition immobilier résidentiel français. Marges retail sous pression des néobanques."},
+
+{ticker:'GLE',name:'Société Générale',sector:'Banque',cap:'large',srd:true,idx:'CAC40',
+ price:28,chg:1.2,mkt:'24Md€',b52h:34,b52l:21,beta:1.5,
+ pe:6,pb:0.4,ev_ebitda:999,ps:0.8,pfcf:999,ev_ebit:999,
+ roe:8,roic:999,roa:0.4,debt:999,de:10.2,ic:999,cr:999,qr:999,
+ yield:8.5,epsg:6,revg:4,margin:18,gm:999,om:999,fcf:999,
+ capex:0.9,capr:999,capda:999,
+ dcfb:22,dcfm:34,dcfu:45,
+ pio:5,alt:999,rsi:55,mm50:26,mm200:24,
+ el:24,eh:30,stop:20,o1:36,o2:42,
+ cb:10,ch:5,cs:4,tp:36,score:'C',rec:'watch',zone:true,
+ moat:[['CIB franchise','modéré'],['Réseau retail France','modéré']],
+ cats:[{t:'Plan transformation 2026',w:'T2 2026',c:'var(--gn)'},{t:'Cession activités non-core',w:'2026',c:'var(--gd)'}],
+ ins:[['Achat','CEO Koné','1.5M€','Mars 2026']],
+ peers:[{n:'BNP Paribas',pe:7,pb:0.7,roe:10,div:7.8,evebitda:999},{n:'Natixis',pe:8,pb:0.6,roe:9,div:7.2,evebitda:999}],
+ risks:{Crédit:70,Régulation:70,Transformation:65,CIB:55,Réputation:50,Liquidité:25},
+ track:[{y:'2025',p:'Retour à la rentabilité target',ok:'partial'},{y:'2024',p:'Cession Rosbank finalisée',ok:'ok'}],
+ thesis:"SocGen se traite à 0.4x l'actif net — une décote extrême. Le nouveau CEO Slawomir Krupa exécute un plan de transformation crédible. Un simple retour à 0.6x NAV implique +50%.",
+ contra:"SocGen traîne une réputation de restructurations promises non tenues. Le CIB est une boîte noire. Historique de surprises négatives (Jérôme Kerviel, etc.). La décote peut persister longtemps."},
+
+{ticker:'AIR',name:'Airbus',sector:'Aéronautique',cap:'large',srd:true,idx:'CAC40',
+ price:168,chg:-0.3,mkt:'132Md€',b52h:185,b52l:128,beta:0.9,
+ pe:30,pb:12.4,ev_ebitda:18,ps:1.8,pfcf:24,ev_ebit:20,
+ roe:45,roic:28,roa:8,debt:999,de:8.2,ic:5.2,cr:0.8,qr:0.6,
+ yield:1.6,epsg:20,revg:14,margin:6,gm:18,om:8,fcf:5.8,
+ capex:3.8,capr:5.2,capda:0.8,
+ dcfb:140,dcfm:185,dcfu:230,
+ pio:6,alt:999,rsi:50,mm50:165,mm200:158,
+ el:150,eh:172,stop:138,o1:190,o2:215,
+ cb:18,ch:6,cs:1,tp:195,score:'B',rec:'watch',zone:true,
+ moat:[['Duopole A320 avec Boeing','fort'],['Carnet 8000+ avions','fort'],['Cycles longs','fort']],
+ cats:[{t:'Montée cadence A320 75/mois',w:'2026',c:'var(--gn)'},{t:'A321XLR en service',w:'2025-2026',c:'var(--gd)'}],
+ ins:[['Achat','CEO Faury','6.2M€','Jan 2026']],
+ peers:[{n:'Boeing',pe:999,pb:999,roe:-40,div:0.0,evebitda:25},{n:'Embraer',pe:18,pb:3.2,roe:14,div:0.5,evebitda:12}],
+ risks:{Supply:75,Devise:65,Boeing:40,Spatial:35,Géopolitique:30,Liquidité:15},
+ track:[{y:'2025',p:'Livraisons 766 avions',ok:'partial'},{y:'2024',p:'Supply chain sous tension',ok:'partial'}],
+ thesis:"Airbus a un carnet de commandes de 8500 avions soit 12 ans de production. Boeing en crise durable renforce la position d'Airbus. La demande aérienne mondiale retrouve ses niveaux pré-COVID.",
+ contra:"Supply chain en crise — moteurs CFM en retard. Objectifs de livraison manqués plusieurs années de suite. Marge opérationnelle trop faible (8%) pour la valorisation demandée."},
+
+{ticker:'KER',name:'Kering',sector:'Luxe',cap:'large',srd:true,idx:'CAC40',
+ price:195,chg:-1.5,mkt:'24Md€',b52h:280,b52l:180,beta:1.4,
+ pe:14,pb:2.1,ev_ebitda:9,ps:1.2,pfcf:12,ev_ebit:11,
+ roe:15,roic:12,roa:7,debt:1.8,de:1.0,ic:5.2,cr:1.1,qr:0.9,
+ yield:4.2,epsg:-5,revg:-8,margin:16,gm:72,om:18,fcf:7.5,
+ capex:4.2,capr:5.8,capda:0.7,
+ dcfb:155,dcfm:220,dcfu:290,
+ pio:5,alt:3.2,rsi:35,mm50:210,mm200:235,
+ el:185,eh:205,stop:168,o1:240,o2:280,
+ cb:8,ch:8,cs:6,tp:230,score:'C',rec:'watch',zone:true,
+ moat:[['Gucci brand','modéré'],['Saint Laurent','modéré'],['Bottega Veneta','modéré']],
+ cats:[{t:'Rebranding Gucci phase 2',w:'T2 2026',c:'var(--gn)'},{t:'Sabato De Sarno résultats',w:'T1 2026',c:'var(--gd)'}],
+ ins:[['Achat','François-Henri Pinault','45M€','Fév 2026']],
+ peers:[{n:'LVMH',pe:22,pb:5.1,roe:24,div:2.4,evebitda:14},{n:'Hermès',pe:50,pb:22,roe:36,div:0.6,evebitda:32}],
+ risks:{Gucci:80,Chine:70,Direction:60,Cyclicité:55,Devise:45,Liquidité:20},
+ track:[{y:'2025',p:'Gucci revenus -12%',ok:'m'},{y:'2024',p:'Changement direction créative',ok:'partial'}],
+ thesis:"Kering est la grande décotée du luxe. À 2x la valeur comptable avec Gucci en cours de repositionnement, la valorisation suppose un échec permanent. Si Gucci retrouve 15% de marge opérationnelle, le titre double.",
+ contra:"Gucci représente 60% des profits et est en crise depuis 2023. Alessandro Michele est parti, Sabato De Sarno n'a pas encore convaincu. Le risque de trappe à valeur est réel."},
+
+{ticker:'RMS',name:'Hermès',sector:'Luxe',cap:'large',srd:true,idx:'CAC40',
+ price:2180,chg:0.2,mkt:'232Md€',b52h:2450,b52l:1820,beta:0.6,
+ pe:50,pb:22,ev_ebitda:32,ps:12.8,pfcf:42,ev_ebit:36,
+ roe:36,roic:32,roa:22,debt:0.0,de:0.2,ic:999,cr:3.8,qr:3.2,
+ yield:0.6,epsg:15,revg:12,margin:42,gm:70,om:42,fcf:10.5,
+ capex:4.2,capr:5.8,capda:0.6,
+ dcfb:1800,dcfm:2400,dcfu:3000,
+ pio:9,alt:6.2,rsi:48,mm50:2200,mm200:2150,
+ el:2000,eh:2250,stop:1800,o1:2500,o2:2800,
+ cb:22,ch:5,cs:1,tp:2600,score:'A',rec:'buy',zone:true,
+ moat:[['Marque la plus désirable au monde','fort'],['Offre intentionnellement limitée','fort'],['Savoir-faire artisanal','fort']],
+ cats:[{t:'Nouvelle maroquinerie Normandie',w:'2027',c:'var(--gn)'},{t:'Horlogerie expansion',w:'2026',c:'var(--gd)'}],
+ ins:[['Achat','Famille Hermès','2.1Md€','Déc 2025']],
+ peers:[{n:'LVMH',pe:22,pb:5.1,roe:24,div:2.4,evebitda:14},{n:'Richemont',pe:18,pb:3.8,roe:16,div:2.2,evebitda:12}],
+ risks:{Valorisation:70,Devise:40,Succession:35,Contrefaçon:30,Cyclicité:25,Liquidité:10},
+ track:[{y:'2025',p:'Marge op. 42% record',ok:'ok'},{y:'2024',p:'Revenus +12%',ok:'ok'}],
+ thesis:"Hermès est l'actif le plus unique de la bourse mondiale. 42% de marge opérationnelle, zéro dette, famille aux commandes depuis 6 générations. La liste d'attente Birkin crée une demande artificielle qui immunise contre les cycles économiques.",
+ contra:"Valorisation à 50x PE ne permet aucune erreur. Risque de succession familiale. Taille encore limitée. Contrefaçon croissante en Asie érode la perception de rareté."},
+
+{ticker:'PUB',name:'Publicis',sector:'Communication',cap:'large',srd:true,idx:'CAC40',
+ price:118,chg:0.8,mkt:'16Md€',b52h:132,b52l:92,beta:1.1,
+ pe:14,pb:2.8,ev_ebitda:9,ps:1.5,pfcf:12,ev_ebit:11,
+ roe:22,roic:15,roa:7,debt:1.2,de:0.9,ic:6.2,cr:1.0,qr:0.9,
+ yield:3.8,epsg:8,revg:6,margin:18,gm:32,om:18,fcf:9.2,
+ capex:1.2,capr:1.8,capda:0.4,
+ dcfb:95,dcfm:130,dcfu:165,
+ pio:7,alt:3.8,rsi:56,mm50:115,mm200:108,
+ el:105,eh:125,stop:95,o1:138,o2:155,
+ cb:14,ch:6,cs:2,tp:140,score:'B',rec:'buy',zone:false,
+ moat:[['Epsilon data assets','fort'],['Sapient tech consulting','modéré'],['Global network','modéré']],
+ cats:[{t:'IA générative pub révolution',w:'2026',c:'var(--gn)'},{t:'Acquisitions IA ciblées',w:'2026',c:'var(--gd)'}],
+ ins:[['Achat','CEO Lévy','3.8M€','Jan 2026']],
+ peers:[{n:'WPP',pe:9,pb:1.8,roe:18,div:6.2,evebitda:7},{n:'Omnicom',pe:12,pb:3.5,roe:28,div:3.2,evebitda:9}],
+ risks:{IA:55,Clients:45,Devise:50,Cyclicité:40,Concurrence:35,Liquidité:15},
+ track:[{y:'2025',p:'Organique +6%',ok:'ok'},{y:'2024',p:'Epsilon pleine contribution',ok:'ok'}],
+ thesis:"Publicis a réinventé son modèle autour des données et de la technologie. Epsilon est un actif de données de 250M profils américains sans équivalent. Le groupe gagne des parts de marché depuis 4 ans consécutifs sur WPP et IPG.",
+ contra:"L'IA générative menace directement les métiers créatifs traditionnels. Exposition macro sur les budgets publicitaires. WPP contre-attaque agressivement."},
+
+{ticker:'ORA',name:'Orange',sector:'Télécoms',cap:'large',srd:true,idx:'CAC40',
+ price:11.2,chg:-0.2,mkt:'30Md€',b52h:13.8,b52l:10.2,beta:0.4,
+ pe:12,pb:1.1,ev_ebitda:5,ps:0.5,pfcf:8,ev_ebit:7,
+ roe:9,roic:5,roa:3,debt:2.8,de:1.4,ic:4.2,cr:0.8,qr:0.7,
+ yield:7.2,epsg:3,revg:2,margin:6,gm:35,om:12,fcf:6.5,
+ capex:14.8,capr:8.2,capda:0.9,
+ dcfb:9.5,dcfm:13,dcfu:17,
+ pio:5,alt:2.8,rsi:42,mm50:11.5,mm200:12.0,
+ el:10.2,eh:11.8,stop:9.5,o1:13.5,o2:15.5,
+ cb:8,ch:6,cs:4,tp:13.5,score:'C',rec:'hold',zone:true,
+ moat:[['Réseau fibre/5G France','modéré'],['Afrique forte croissance','modéré']],
+ cats:[{t:'Fibre rentabilité 2026',w:'T2 2026',c:'var(--gn)'},{t:'Afrique MoMo scaling',w:'2026',c:'var(--gd)'}],
+ ins:[['Achat','CEO Olam','0.8M€','Jan 2026']],
+ peers:[{n:'Bouygues Telecom',pe:14,pb:1.2,roe:8,div:5.8,evebitda:6},{n:'Deutsche Telekom',pe:14,pb:2.1,roe:12,div:4.2,evebitda:6}],
+ risks:{Régulation:65,CAPEX:70,Concurrence:60,Dette:55,Afrique:40,Liquidité:20},
+ track:[{y:'2025',p:'Dividende 0.72€ maintenu',ok:'ok'},{y:'2024',p:'Fibre 10M prises',ok:'ok'}],
+ thesis:"Orange est une valeur de rendement pure avec 7.2% de dividende couvert par le FCF. L'Afrique sub-saharienne (30% CA) croît à 15%/an. À 5x EV/EBITDA, la décote vs pairs européens est injustifiée.",
+ contra:"CAPEX permanent détruit la valeur. Marché français mature et hyper-concurrentiel. L'Afrique apporte de la croissance mais aussi du risque géopolitique/devise."},
+
+{ticker:'VIE',name:'Veolia',sector:'Eau & Déchets',cap:'large',srd:true,idx:'CAC40',
+ price:28,chg:0.3,mkt:'20Md€',b52h:32,b52l:23,beta:0.8,
+ pe:15,pb:2.2,ev_ebitda:8,ps:0.5,pfcf:14,ev_ebit:10,
+ roe:14,roic:8,roa:4,debt:3.2,de:1.2,ic:4.8,cr:1.0,qr:0.8,
+ yield:4.8,epsg:8,revg:5,margin:4,gm:22,om:8,fcf:5.2,
+ capex:8.2,capr:5.8,capda:0.8,
+ dcfb:23,dcfm:32,dcfu:40,
+ pio:6,alt:3.2,rsi:50,mm50:27,mm200:26,
+ el:24,eh:30,stop:22,o1:34,o2:38,
+ cb:12,ch:6,cs:2,tp:34,score:'B',rec:'buy',zone:true,
+ moat:[['Concessions eau 30 ans','fort'],['Suez intégration','modéré'],['Expertise technique','modéré']],
+ cats:[{t:'Synergies Suez 500M€',w:'2026',c:'var(--gn)'},{t:'Eau potable demande structurelle',w:'Long terme',c:'var(--gd)'}],
+ ins:[['Achat','CEO Frerot','2.1M€','Jan 2026']],
+ peers:[{n:'Suez (privé)',pe:18,pb:2.5,roe:12,div:3.8,evebitda:9},{n:'Pennon UK',pe:16,pb:1.8,roe:10,div:5.2,evebitda:8}],
+ risks:{Régulation:55,Taux:50,CAPEX:60,Politique:45,Devise:40,Liquidité:20},
+ track:[{y:'2025',p:'Synergies Suez +480M€',ok:'ok'},{y:'2024',p:'Résultat net +12%',ok:'ok'}],
+ thesis:"Veolia est le leader mondial de l'eau — actif de plus en plus rare. La fusion Suez crée un géant avec des économies d'échelle massives. Les concessions eau sont des monopoles naturels protégés réglementairement.",
+ contra:"Dette élevée post-fusion. CAPEX permanent. Régulation tarifaire peut bloquer la transmission des coûts. Politique locale peut remettre en cause des concessions."},
+
+{ticker:'RNO',name:'Renault',sector:'Automobile',cap:'mid',srd:true,idx:'CAC40',
+ price:42,chg:-0.8,mkt:'13Md€',b52h:58,b52l:35,beta:1.5,
+ pe:5,pb:0.5,ev_ebitda:3,ps:0.2,pfcf:6,ev_ebit:4,
+ roe:12,roic:6,roa:3,debt:2.8,de:1.8,ic:3.2,cr:1.1,qr:0.9,
+ yield:5.8,epsg:8,revg:3,margin:4,gm:15,om:6,fcf:5.5,
+ capex:6.2,capr:3.8,capda:0.6,
+ dcfb:32,dcfm:52,dcfu:72,
+ pio:5,alt:2.8,rsi:40,mm50:45,mm200:48,
+ el:36,eh:44,stop:32,o1:55,o2:65,
+ cb:8,ch:7,cs:6,tp:56,score:'C',rec:'watch',zone:true,
+ moat:[['Ampere VE platform','modéré'],['Alliance Nissan','modéré']],
+ cats:[{t:'Ampere IPO valorisation',w:'2026',c:'var(--gn)'},{t:'Renault 5 électrique succès',w:'T2 2026',c:'var(--gd)'}],
+ ins:[['Achat','État français','150M€','Déc 2025']],
+ peers:[{n:'Stellantis',pe:4,pb:0.4,roe:8,div:5.5,evebitda:2},{n:'Volkswagen',pe:4,pb:0.4,roe:6,div:6.8,evebitda:2}],
+ risks:{VE:75,Chine:70,Alliance:60,Devise:55,Cyclicité:65,Liquidité:25},
+ track:[{y:'2025',p:'Marge op. 7.5%',ok:'ok'},{y:'2024',p:'Renault 5 lancé',ok:'ok'}],
+ thesis:"Renault est sous-valorisé face à la somme des parties : Ampere (VE) + HORSE (moteurs thermiques) + marque Renault. À 0.5x livre, le marché paye zéro pour la plateforme VE.",
+ contra:"Transition VE incertaine. Alliance Nissan fragile. Concurrence chinoise déferle. Marge fine dans un secteur capital-intensif."},
+
+{ticker:'GTT',name:'Gaztransport & Technigaz',sector:'LNG Technology',cap:'mid',srd:true,idx:'SBF120',
+ price:194,chg:0.4,mkt:'7.2Md€',b52h:199,b52l:111,beta:0.24,
+ pe:22,pb:12,ev_ebitda:15,ps:9.2,pfcf:18,ev_ebit:16,
+ roe:85,roic:72,roa:52,debt:0.0,de:0.1,ic:999,cr:3.2,qr:2.8,
+ yield:5.2,epsg:18,revg:25,margin:58,gm:68,om:58,fcf:18.5,
+ capex:0.8,capr:1.2,capda:0.3,
+ dcfb:165,dcfm:235,dcfu:295,
+ pio:9,alt:6.8,rsi:62,mm50:188,mm200:152,
+ el:183,eh:204,stop:165,o1:248,o2:280,
+ cb:8,ch:4,cs:2,tp:245,score:'A',rec:'buy',zone:true,
+ moat:[['Monopole brevets membranes LNG','fort'],['Dépendance totale clients','fort'],['30 ans de protection IP','fort']],
+ cats:[{t:'Commande Samsung H1 2026',w:'T1 2026',c:'var(--gn)'},{t:'GNL Canada volumes',w:'2026',c:'var(--gd)'}],
+ ins:[['Achat','CEO Metz','8.2M€','Fév 2026']],
+ peers:[{n:'Technip Energies',pe:14,pb:2.8,roe:22,div:3.2,evebitda:8},{n:'Chart Industries',pe:18,pb:2.4,roe:14,div:0.5,evebitda:12}],
+ risks:{LNG:60,Samsung:45,Décarbonation:55,Concentration:65,Devise:35,Liquidité:20},
+ track:[{y:'2025',p:'EBITDA +40% FY2025',ok:'ok'},{y:'2024',p:'Commandes record 19 unités',ok:'ok'}],
+ thesis:"GTT est probablement la société la plus rentable de la cote française. 58% de marge nette, zéro dette, ROE 85%, FCF yield 18.5%. Monopole de brevets sur les membranes LNG protégé 30 ans. Proche du plus haut historique.",
+ contra:"GTT est un pur jeu GNL dans un monde qui se décarbonise. Si les commandes de méthaniers s'effondrent, la thèse s'effondre. Samsung et Daewoo peuvent investir pour développer une alternative."},
+
+{ticker:'COFA',name:'Coface',sector:'Assurance crédit',cap:'mid',srd:true,idx:'SBF120',
+ price:12.8,chg:0.4,mkt:'1.9Md€',b52h:16.8,b52l:11.8,beta:1.0,
+ pe:8,pb:1.2,ev_ebitda:5,ps:0.8,pfcf:7,ev_ebit:6,
+ roe:14,roic:12,roa:4,debt:0.5,de:0.6,ic:8.5,cr:1.2,qr:1.0,
+ yield:8.2,epsg:5,revg:4,margin:12,gm:45,om:14,fcf:9.8,
+ capex:0.5,capr:0.8,capda:0.2,
+ dcfb:11,dcfm:15.5,dcfu:21,
+ pio:8,alt:3.8,rsi:45,mm50:12.5,mm200:12.5,
+ el:11.5,eh:13.2,stop:10.2,o1:16,o2:18.5,
+ cb:8,ch:4,cs:2,tp:16.5,score:'A',rec:'buy',zone:true,
+ moat:[['Données sinistralité mondiale','fort'],['Réseau 100 pays','modéré'],['Modèle cyclique géré','modéré']],
+ cats:[{t:'Taux de sinistralité bas 2026',w:'T1 2026',c:'var(--gn)'},{t:'Dividende 8.2%',w:'Mai 2026',c:'var(--gd)'}],
+ ins:[['Achat','CEO Durand','1.19M€','Fév 2026']],
+ peers:[{n:'Euler Hermes',pe:10,pb:1.8,roe:18,div:5.2,evebitda:7},{n:'Atradius',pe:9,pb:1.4,roe:14,div:6.1,evebitda:6}],
+ risks:{Faillites:70,Macro:65,Cyclicité:60,Régulation:35,Concentration:40,Liquidité:20},
+ track:[{y:'2025',p:'ROE 14%',ok:'ok'},{y:'2024',p:'Dividende 1.25€',ok:'ok'}],
+ thesis:"Coface est la grande oubliée de la cote française. 8.2% de dividende couvert 2x par le bénéfice. La sinistralité est au plus bas. Le CEO a acheté pour 1.2M€ en février 2026 — signal fort.",
+ contra:"L'assurance crédit est directement cyclique sur les faillites. Un retournement économique ou une hausse du chômage fait exploser les sinistres. Business model opaque."},
+
+{ticker:'MERY',name:'Mersen',sector:'Matériaux spéciaux',cap:'small',srd:true,idx:'SBF120',
+ price:24.5,chg:-0.3,mkt:'0.62Md€',b52h:32,b52l:22,beta:1.1,
+ pe:10,pb:1.0,ev_ebitda:6,ps:0.5,pfcf:8,ev_ebit:7,
+ roe:10,roic:8,roa:5,debt:1.8,de:0.8,ic:5.2,cr:1.5,qr:1.2,
+ yield:3.8,epsg:6,revg:4,margin:8,gm:32,om:10,fcf:6.2,
+ capex:4.8,capr:8.2,capda:0.9,
+ dcfb:20,dcfm:28,dcfu:36,
+ pio:6,alt:3.2,rsi:38,mm50:26,mm200:28,
+ el:22,eh:27,stop:19,o1:32,o2:38,
+ cb:6,ch:5,cs:2,tp:30,score:'B',rec:'watch',zone:true,
+ moat:[['Graphites spéciaux SiC','fort'],['Nucléaire qualité','fort'],['Niche industrielle','modéré']],
+ cats:[{t:'Nucléaire SMR contrat',w:'T2 2026',c:'var(--gn)'},{t:'SiC véhicules électriques',w:'2026',c:'var(--gd)'}],
+ ins:[['Achat','Direction Mersen','0.4M€','Jan 2026']],
+ peers:[{n:'SGL Carbon',pe:12,pb:1.2,roe:8,div:2.8,evebitda:7},{n:'Tokai Carbon',pe:11,pb:1.1,roe:9,div:3.2,evebitda:6}],
+ risks:{VE:60,Nucléaire:45,Cyclicité:55,Dette:40,Devise:35,Liquidité:30},
+ track:[{y:'2025',p:'CA stable malgré VE ralentissement',ok:'partial'},{y:'2024',p:'Nucléaire +15%',ok:'ok'}],
+ thesis:"Mersen est une niche industrielle ignorée du marché. Graphites indispensables aux SiC pour VE et aux réacteurs nucléaires. À 10x PE, une reprise des commandes VE en 2026 pourrait déclencher un re-rating.",
+ contra:"Exposition forte à la cyclicité VE qui ralentit. Taille limitée (600M€ cap) peu liquide. Dette modérée laisse peu de marge."},
+
+{ticker:'JXS',name:'Jacquet Metals',sector:'Aciers spéciaux',cap:'small',srd:true,idx:'SBF120',
+ price:22,chg:1.1,mkt:'0.43Md€',b52h:28,b52l:18,beta:0.9,
+ pe:9,pb:0.8,ev_ebitda:4,ps:0.2,pfcf:7,ev_ebit:5,
+ roe:9,roic:7,roa:4,debt:0.8,de:0.5,ic:6.8,cr:1.8,qr:1.4,
+ yield:6.2,epsg:5,revg:3,margin:3,gm:22,om:5,fcf:6.5,
+ capex:1.2,capr:2.8,capda:0.5,
+ dcfb:18,dcfm:26,dcfu:34,
+ pio:7,alt:3.5,rsi:48,mm50:21,mm200:22,
+ el:19,eh:23.5,stop:16.5,o1:28,o2:32,
+ cb:4,ch:6,cs:2,tp:28,score:'B',rec:'buy',zone:true,
+ moat:[['Distribution aciers spéciaux','modéré'],['Service cut-to-size','modéré']],
+ cats:[{t:'Rebond industriel Europe',w:'T2 2026',c:'var(--gn)'},{t:'Dividende 6.2%',w:'Juin 2026',c:'var(--gd)'}],
+ ins:[['Achat','Famille Jacquet','1.8M€','Jan 2026']],
+ peers:[{n:'Klöckner',pe:8,pb:0.6,roe:7,div:4.2,evebitda:4},{n:'Service Center Steel',pe:9,pb:0.7,roe:8,div:3.8,evebitda:4}],
+ risks:{Acier:65,Industrie:60,Cyclicité:65,Marges:55,Devise:40,Liquidité:35},
+ track:[{y:'2025',p:'Marge maintenue malgré baisse volumes',ok:'partial'},{y:'2024',p:'Dividende maintenu',ok:'ok'}],
+ thesis:"Jacquet Metals est la pépite discrète de la distribution d'aciers spéciaux. À 0.8x la valeur comptable avec 6.2% de dividende, le risque est limité. La famille aux commandes est un facteur de stabilité.",
+ contra:"Si VE ralentissent, la thèse s'effondre. Marges très fines dans la distribution. Exposition cyclique maximale à l'industrie européenne en récession."},
+
+{ticker:'SGO',name:'Saint-Gobain',sector:'Matériaux construction',cap:'large',srd:true,idx:'CAC40',
+ price:68,chg:0.2,mkt:'36Md€',b52h:82,b52l:56,beta:1.1,
+ pe:12,pb:1.8,ev_ebitda:8,ps:0.6,pfcf:10,ev_ebit:9,
+ roe:15,roic:10,roa:6,debt:1.5,de:0.8,ic:6.2,cr:1.2,qr:1.0,
+ yield:3.2,epsg:8,revg:5,margin:7,gm:32,om:10,fcf:7.2,
+ capex:5.8,capr:4.2,capda:0.7,
+ dcfb:56,dcfm:76,dcfu:95,
+ pio:7,alt:3.8,rsi:50,mm50:67,mm200:64,
+ el:60,eh:72,stop:54,o1:80,o2:90,
+ cb:14,ch:5,cs:2,tp:82,score:'B',rec:'buy',zone:true,
+ moat:[['Isolation thermique leader','fort'],['Distribution réseau dense','modéré'],['Innovation matériaux','modéré']],
+ cats:[{t:'Rénovation énergétique EU',w:'2026-2030',c:'var(--gn)'},{t:'US construction rebond',w:'T2 2026',c:'var(--gd)'}],
+ ins:[['Achat','CEO Guillemot','4.2M€','Jan 2026']],
+ peers:[{n:'Kingspan',pe:22,pb:4.2,roe:20,div:0.8,evebitda:14},{n:'Rockwool',pe:18,pb:3.5,roe:18,div:1.5,evebitda:12}],
+ risks:{Construction:65,Taux:60,Cyclicité:55,Énergie:45,Devise:40,Liquidité:15},
+ track:[{y:'2025',p:'Marge op. 10% record',ok:'ok'},{y:'2024',p:'Acquisitions isolation',ok:'ok'}],
+ thesis:"Saint-Gobain est le grand bénéficiaire de la rénovation énergétique européenne. Isolation thermique = obligation réglementaire croissante. À 12x PE avec 3.2% de dividende, la valorisation est attractive.",
+ contra:"Exposition forte à la construction neuve en baisse. Taux élevés pèsent sur l'immobilier. Cyclicité marquée."},
+
+{ticker:'CAP',name:'Capgemini',sector:'Services informatiques',cap:'large',srd:true,idx:'CAC40',
+ price:165,chg:0.5,mkt:'24Md€',b52h:195,b52l:140,beta:1.2,
+ pe:18,pb:3.2,ev_ebitda:11,ps:1.5,pfcf:14,ev_ebit:12,
+ roe:18,roic:14,roa:8,debt:0.5,de:0.6,ic:8.2,cr:1.4,qr:1.2,
+ yield:2.1,epsg:8,revg:6,margin:12,gm:28,om:13,fcf:7.8,
+ capex:1.8,capr:2.2,capda:0.4,
+ dcfb:140,dcfm:180,dcfu:225,
+ pio:7,alt:4.2,rsi:48,mm50:165,mm200:170,
+ el:148,eh:172,stop:135,o1:190,o2:215,
+ cb:14,ch:7,cs:2,tp:195,score:'B',rec:'watch',zone:true,
+ moat:[['Expertise sectorielle profonde','modéré'],['Global delivery model','modéré'],['Partenariats hyperscalers','modéré']],
+ cats:[{t:'IA générative revenus',w:'2026',c:'var(--gn)'},{t:'Cloud migration continue',w:'2026',c:'var(--gd)'}],
+ ins:[['Achat','CEO Fernandez','2.8M€','Jan 2026']],
+ peers:[{n:'Accenture',pe:25,pb:8,roe:35,div:1.8,evebitda:18},{n:'Sopra Steria',pe:14,pb:2.2,roe:12,div:3.2,evebitda:9}],
+ risks:{IA:60,Concurrence:55,Macro:50,Offshoring:45,Devise:50,Liquidité:15},
+ track:[{y:'2025',p:'IA book of business 2Md€',ok:'ok'},{y:'2024',p:'Croissance organique +7%',ok:'partial'}],
+ thesis:"Capgemini est le premier bénéficiaire de la transformation IA des grandes entreprises. Le pipeline IA générative représente déjà 2Md€. À 18x PE, la valorisation ne reflète pas encore ce pivot.",
+ contra:"Croissance ralentit en Europe. Concurrence d'Accenture féroce. Risque de compression des marges avec l'IA qui automate les tâches bas de gamme."},
+
+{ticker:'VIV',name:'Vivendi',sector:'Médias',cap:'large',srd:true,idx:'CAC40',
+ price:3.2,chg:-0.5,mkt:'3.8Md€',b52h:4.8,b52l:2.8,beta:0.8,
+ pe:12,pb:0.6,ev_ebitda:7,ps:0.4,pfcf:10,ev_ebit:8,
+ roe:5,roic:4,roa:2,debt:2.2,de:0.8,ic:4.2,cr:1.0,qr:0.8,
+ yield:4.5,epsg:5,revg:3,margin:8,gm:28,om:9,fcf:6.8,
+ capex:1.2,capr:2.8,capda:0.5,
+ dcfb:2.5,dcfm:3.8,dcfu:5.2,
+ pio:5,alt:3.0,rsi:38,mm50:3.4,mm200:3.8,
+ el:2.8,eh:3.4,stop:2.5,o1:4.2,o2:5.0,
+ cb:6,ch:5,cs:3,tp:4.2,score:'C',rec:'watch',zone:true,
+ moat:[['Canal+ Afrique','modéré'],['Havas pub','modéré'],['CNews/Europe1','modéré']],
+ cats:[{t:'Canal+ cotation Londres',w:'T1 2026',c:'var(--gn)'},{t:'Havas spin-off',w:'2026',c:'var(--gd)'}],
+ ins:[['Achat','Bolloré via Compagnie','180M€','Jan 2026']],
+ peers:[{n:'Lagardère',pe:14,pb:2.1,roe:10,div:3.5,evebitda:9},{n:'ITV',pe:9,pb:1.8,roe:15,div:6.5,evebitda:6}],
+ risks:{Médias:70,Bolloré:65,Politique:60,Digital:65,Régulation:55,Liquidité:25},
+ track:[{y:'2025',p:'Spin-offs multiples',ok:'partial'},{y:'2024',p:'Scission Canal+/Havas/Prisma',ok:'ok'}],
+ thesis:"Vivendi vaut plus mort que vivant. Les spin-offs Canal+, Havas et Prisma révèlent une valeur cachée. À 0.6x l'actif net, la somme des parties est 2x le cours actuel.",
+ contra:"Bolloré garde le contrôle — risque gouvernance fort. Médias traditionnels en déclin structurel. Les spin-offs ont créé de la complexité plutôt que de la valeur."},
+
+{ticker:'RI',name:'Pernod Ricard',sector:'Spiritueux',cap:'large',srd:true,idx:'CAC40',
+ price:88,chg:-0.8,mkt:'24Md€',b52h:118,b52l:82,beta:0.9,
+ pe:16,pb:2.2,ev_ebitda:12,ps:2.5,pfcf:15,ev_ebit:14,
+ roe:14,roic:10,roa:6,debt:2.2,de:1.0,ic:5.8,cr:1.3,qr:1.0,
+ yield:3.8,epsg:5,revg:2,margin:24,gm:62,om:25,fcf:7.8,
+ capex:3.2,capr:4.8,capda:0.6,
+ dcfb:75,dcfm:105,dcfu:135,
+ pio:6,alt:3.5,rsi:38,mm50:95,mm200:105,
+ el:80,eh:95,stop:72,o1:110,o2:125,
+ cb:10,ch:7,cs:4,tp:112,score:'C',rec:'watch',zone:true,
+ moat:[['Jameson whiskey leader','fort'],['Martell cognac Chine','modéré'],['Absolut vodka','modéré']],
+ cats:[{t:'Normalisation stocks US/Chine',w:'T2 2026',c:'var(--gn)'},{t:'Inde croissance',w:'2026',c:'var(--gd)'}],
+ ins:[['Achat','CEO Ricard','3.2M€','Jan 2026']],
+ peers:[{n:'Diageo',pe:16,pb:5.8,roe:35,div:3.8,evebitda:14},{n:'Rémy Cointreau',pe:22,pb:3.5,roe:15,div:2.8,evebitda:16}],
+ risks:{Chine:70,US:65,Santé:55,Devise:50,Cyclicité:45,Liquidité:20},
+ track:[{y:'2025',p:'Volumes -8% vs guidance -5%',ok:'m'},{y:'2024',p:'Chine normalisation lente',ok:'m'}],
+ thesis:"Pernod est en bas de cycle avec une thèse de normalisation claire. La pression sur les stocks US et Chine est en train de se résoudre. Jameson est la marque whiskey à la croissance la plus rapide au monde.",
+ contra:"La Chine déçoit depuis 18 mois. Le marché US des spiritueux premium ralentit. La dette est élevée. Les objectifs sont manqués régulièrement."},
+
+{ticker:'LR',name:'Legrand',sector:'Électricité bâtiment',cap:'large',srd:true,idx:'CAC40',
+ price:94,chg:0.4,mkt:'26Md€',b52h:108,b52l:78,beta:0.8,
+ pe:24,pb:5.2,ev_ebitda:16,ps:3.8,pfcf:20,ev_ebit:18,
+ roe:22,roic:18,roa:10,debt:1.2,de:0.7,ic:8.5,cr:1.5,qr:1.2,
+ yield:1.8,epsg:10,revg:8,margin:18,gm:52,om:21,fcf:8.5,
+ capex:2.2,capr:3.2,capda:0.5,
+ dcfb:78,dcfm:102,dcfu:128,
+ pio:8,alt:4.5,rsi:52,mm50:92,mm200:88,
+ el:84,eh:98,stop:76,o1:110,o2:122,
+ cb:14,ch:6,cs:2,tp:112,score:'A',rec:'buy',zone:true,
+ moat:[['Électricité bâtiment spécialisée','fort'],['Data center power management','fort'],['M&A discipliné 200+ acquisitions','fort']],
+ cats:[{t:'Data center infrastructure boom',w:'2026',c:'var(--gn)'},{t:'Rénovation électrique EU',w:'2026-2028',c:'var(--gd)'}],
+ ins:[['Achat','Famille Verspieren','5.8M€','Jan 2026']],
+ peers:[{n:'Schneider',pe:28,pb:6.8,roe:26,div:1.5,evebitda:18},{n:'ABB',pe:25,pb:5.8,roe:22,div:2.0,evebitda:16}],
+ risks:{Data:35,Bâtiment:45,Devise:40,Taux:35,Cyclicité:30,Liquidité:10},
+ track:[{y:'2025',p:'Croissance organique +9%',ok:'ok'},{y:'2024',p:'Data center +20%',ok:'ok'}],
+ thesis:"Legrand est la compagnie la mieux managée du CAC40. 24 années consécutives de hausse du BPA. Data centers = 25% du CA et croît à 20%/an. La famille reste aux commandes — alignement parfait.",
+ contra:"Valorisation premium élevée. Exposition bâtiment résidentiel qui souffre des taux. La croissance data center peut décevoir si les investissements hyperscaler ralentissent."},
+
+{ticker:'WLN',name:'Wendel',sector:'Holdings',cap:'large',srd:true,idx:'CAC40',
+ price:102,chg:0.3,mkt:'4.8Md€',b52h:118,b52l:88,beta:0.9,
+ pe:10,pb:0.7,ev_ebitda:8,ps:0.8,pfcf:9,ev_ebit:9,
+ roe:8,roic:6,roa:4,debt:1.2,de:0.6,ic:6.2,cr:1.5,qr:1.2,
+ yield:3.2,epsg:6,revg:4,margin:15,gm:35,om:16,fcf:7.2,
+ capex:1.2,capr:2.8,capda:0.4,
+ dcfb:85,dcfm:118,dcfu:150,
+ pio:6,alt:3.8,rsi:50,mm50:100,mm200:96,
+ el:90,eh:108,stop:82,o1:120,o2:135,
+ cb:8,ch:5,cs:2,tp:122,score:'B',rec:'buy',zone:true,
+ moat:[['Bureau Veritas 40%','fort'],['Diversification holdings','modéré']],
+ cats:[{t:'Bureau Veritas croissance',w:'2026',c:'var(--gn)'},{t:'Nouvelles acquisitions',w:'2026',c:'var(--gd)'}],
+ ins:[['Achat','Famille Wendel','12M€','Jan 2026']],
+ peers:[{n:'Eurazeo',pe:12,pb:0.8,roe:9,div:2.8,evebitda:9},{n:'Bruxelles Lambert',pe:11,pb:0.6,roe:7,div:3.5,evebitda:8}],
+ risks:{Holdings:40,Bureau:35,Devise:35,Liquidité:30,Concentration:45,Opacité:40},
+ track:[{y:'2025',p:'ANR +8%',ok:'ok'},{y:'2024',p:'Bureau Veritas +7%',ok:'ok'}],
+ thesis:"Wendel traite à 30% de décote sur son actif net réévalué (ANR). Bureau Veritas seul représente plus que la capitalisation boursière de Wendel. La décote de holding est anormalement élevée.",
+ contra:"Les holdings subissent des décotes permanentes. Opacité de la valorisation. Succession familiale peut créer des tensions."},
+
+];
+
+// ═══════════ HELPERS ═══════════
+const gCl=g=>({A:'gA',B:'gB',C:'gC',D:'gD'}[g]||'gC');
+const qGCl=g=>({A:'qA',B:'qB',C:'qC',D:'qD'}[g]||'qC');
+const rCl=r=>({buy:'rb-buy',watch:'rb-watch',hold:'rb-hold',avoid:'rb-avoid'}[r]||'');
+const rLb=r=>({buy:'🎯 ACHETER',watch:'👁 SURVEILLER',hold:'⏸ CONSERVER',avoid:'❌ ÉVITER'}[r]||r);
+const vM={A:'Pépite — Conviction FORTE',B:'Qualité — Potentiel réel identifié',C:'Neutre — Attendre entrée',D:'Éviter — Risques non compensés'};
+const cL={large:'Large Cap',mid:'Mid Cap',small:'Small Cap'};
+
+function mc(k,v){
+  const r={
+    pe:v=>v>0&&v<10?'good':v<=18?'nm':v<=28?'warn':'bad',
+    pb:v=>v<1.2?'good':v<3?'nm':'warn',
+    ev_ebitda:v=>v>0&&v<8?'good':v<14?'nm':'warn',
+    roe:v=>v>18?'good':v>9?'nm':'bad',
+    roic:v=>v>13?'good':v>7?'nm':'bad',
+    roa:v=>v>10?'good':v>5?'nm':'bad',
+    debt:v=>v<0.5?'good':v<1.5?'nm':v<2.5?'warn':'bad',
+    ic:v=>v>8?'good':v>3?'nm':'bad',
+    yield:v=>v>5?'good':v>2.5?'nm':'bad',
+    epsg:v=>v>10?'good':v>3?'nm':v>0?'warn':'bad',
+    margin:v=>v>18?'good':v>8?'nm':v>3?'warn':'bad',
+    gm:v=>v>50?'good':v>30?'nm':'bad',
+    fcf:v=>v>7?'good':v>3.5?'nm':v>0?'warn':'bad',
+    capr:v=>v<5?'good':v<12?'nm':'warn',
+    pio:v=>v>=7?'good':v>=5?'nm':v>=3?'warn':'bad',
+    alt:v=>v>3?'good':v>1.8?'warn':'bad',
+  };
+  return r[k]?r[k](v):'nm';
+}
+function rc(v){return v<35?'var(--gn)':v<55?'var(--gd)':v<70?'var(--or)':'var(--rd)';}
+function up(s){return ((s.dcfm-s.price)/s.price*100).toFixed(1);}
+function uc(u){return parseFloat(u)>10?'var(--gn)':parseFloat(u)>0?'var(--gd)':parseFloat(u)>-10?'var(--mu)':'var(--rd)';}
+function piL(p){return p>=8?'Excellent':p>=6?'Solide':p>=4?'Moyen':'Fragile';}
+function alL(a){return a>3?'Zone sûre':a>1.8?'Zone grise':'⚠️ Danger';}
+function rsiL(r){return r>70?'Suracheté ⚠️':r<30?'Survendu 🟢':r>55?'Haussier':r<45?'Baissier':'Neutre';}
+function piCl(p){return p>=7?'sA':p>=5?'sB':p>=3?'sC':'sD';}
+function alCl(a){return a>3?'sA':a>1.8?'sC':'sD';}
+function rratio(s){const risk=s.price-s.stop;const reward=s.o1-s.price;return risk>0?(reward/risk).toFixed(1):'N/A';}
+function trOk(d){let ok=0,tot=d.length;d.forEach(i=>{if(i.ok==='ok')ok++;else if(i.ok==='partial')ok+=0.5;});return Math.round(ok/tot*100);}
+function trCl(pct){return pct>=75?'sA':pct>=50?'sB':'sD';}
+
+// STATE
+let fil=[...S],idx=0,paused=false,tmr=null,spd=18,cycles=0,srtC=null,srtD=1;
+
+// ═══════════ RENDER ═══════════
+function show(i){
+  if(!fil.length)return;
+  const s=fil[i];
+  document.getElementById('lt').textContent=s.ticker;
+  document.getElementById('lc').style.display='flex';
+  document.getElementById('fiche').style.display='none';
+  setTimeout(()=>render(s),650);
+}
+
+function render(s){
+  const chgS=s.chg>=0?`+${s.chg}%`:`${s.chg}%`;
+  const chgCl=s.chg>0?'pos':s.chg<0?'neg':'neu';
+  const u=up(s);const uCol=uc(u);
+  const ub=((s.dcfb-s.price)/s.price*100).toFixed(1);
+  const ubs=((s.dcfu-s.price)/s.price*100).toFixed(1);
+  const m50d=((s.price-s.mm50)/s.mm50*100).toFixed(1);
+  const m200d=((s.price-s.mm200)/s.mm200*100).toFixed(1);
+  const tot=s.cb+s.ch+s.cs;
+  const rr=rratio(s);
+  const tpct=trOk(s.track);
+  const capR=s.capda<0.8?'<span style="color:var(--gn)">Maintenance</span>':s.capda<1.2?'<span style="color:var(--gd)">Mixte</span>':'<span style="color:var(--or)">Expansion</span>';
+  const now=new Date();
+  const ts=now.toLocaleDateString('fr-FR')+' '+now.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+  const inZ=s.price>=s.el&&s.price<=s.eh;
+
+  const tags=[
+    `<span class="tag t-sec">${s.sector}</span>`,
+    `<span class="tag t-cap">${cL[s.cap]||s.cap} · ${s.idx}</span>`,
+    `<span class="tag t-pea">✓ PEA</span>`,
+    s.srd?'<span class="tag t-srd">SRD</span>':'',
+    inZ?'<span class="tag t-zone">📍 Zone achat</span>':''
+  ].join('');
+
+  const fundMets=[
+    {k:'pe',l:'P/E',v:s.pe,u:'x',d:'Valorisation bénéfices'},{k:'pb',l:'P/B',v:s.pb,u:'x',d:'vs Actif net comptable'},
+    {k:'ev_ebitda',l:'EV/EBITDA',v:s.ev_ebitda,u:'x',d:'Valeur entreprise'},{k:'ps',l:'P/S',v:s.ps,u:'x',d:'Prix/Ventes'},
+    {k:'ev_ebit',l:'EV/EBIT',v:s.ev_ebit,u:'x',d:'Valeur/Résultat opér.'},{k:'roe',l:'ROE',v:s.roe,u:'%',d:'Rentabilité fonds propres'},
+    {k:'roic',l:'ROIC',v:s.roic,u:'%',d:'Retour capital investi'},{k:'roa',l:'ROA',v:s.roa,u:'%',d:'Retour sur actifs'},
+    {k:'margin',l:'Marge Nette',v:s.margin,u:'%',d:'Rentabilité finale'},{k:'gm',l:'Marge Brute',v:s.gm,u:'%',d:'Pricing power'},
+  ];
+  const balMets=[
+    {k:'debt',l:'Dett/EBITDA',v:s.debt,u:'x',d:'Levier financier'},{k:'de',l:'Dett/CP',v:s.de,u:'x',d:'Gearing'},
+    {k:'ic',l:'Int. Coverage',v:s.ic===999?'∞':s.ic,u:s.ic===999?'':' x',d:'Couverture intérêts'},{k:'cr',l:'Current Ratio',v:s.cr||'—',u:'x',d:'Liquidité court terme'},
+    {k:'fcf',l:'FCF Yield',v:s.fcf,u:'%',d:'Flux de trésorerie libre'},{k:'capr',l:'CAPEX/CA',v:s.capr,u:'%',d:'Intensité capitalistique'},
+    {k:'capda',l:'CAPEX/DA',v:s.capda,u:'x',d:'Investissement vs maintenance'},{k:'yield',l:'Dividende',v:s.yield,u:'%',d:'Rendement courant'},
+    {k:'epsg',l:'Croiss. BPA',v:s.epsg,u:'%',d:'Prévision N+1'},{k:'revg',l:'Croiss. CA',v:s.revg,u:'%',d:'Prévision N+1'},
+  ];
+
+  const html=`
+<div class="ftop">
+  <div class="ftkr">${s.ticker}</div>
+  <div class="fmid"><div class="fnm">${s.name}</div><div class="ftags">${tags}</div></div>
+  <div class="frt">
+    <div class="fpr" id="fp-${s.ticker}">${s.price.toFixed(2)} €</div>
+    <div class="flive" id="fl-${s.ticker}">● Données indicatives</div>
+    <div class="fch ${chgCl}">${chgS} aujourd'hui</div>
+    <div class="fmk">Cap. ${s.mkt} · 52S ${s.b52l}-${s.b52h}€ · β${s.beta}</div>
+  </div>
+</div>
+
+<div class="verdict">
+  <div class="vgrd ${gCl(s.score)}">${s.score}</div>
+  <div class="vtxt">
+    <div class="vhl">${vM[s.score]}</div>
+    <div class="vsb">Piotroski ${s.pio}/9 · DCF Base ${s.dcfm}€ (${u>0?'+':''}${u}%) · ${s.cb}/${tot} analystes Buy · Obj. ${s.tp}€ · R/R ${rr}x · Fiabilité dir. ${tpct}%</div>
+  </div>
+  <div class="vrec"><div class="rb ${rCl(s.rec)}">${rLb(s.rec)}</div></div>
+</div>
+
+<div class="tv-wrap" id="tv-chart">
+  <div class="tv-placeholder">
+    <div style="font-size:28px">📈</div>
+    <div>Graphique Weekly — Chargement...</div>
+    <div style="font-size:8px;opacity:.6">TradingView · MM50 · MM200 · RSI</div>
+  </div>
+</div>
+<div id="mm200-banner"></div>
+<div class="sec">
+  <div class="sct">Points d'Entrée & Sortie — Signal Technique</div>
+  <div class="ep">
+    <div class="ep-g">
+      <div class="epb ep-e">
+        <div class="epv">${s.el}–${s.eh}€</div>
+        <div class="eplb">Zone achat</div>
+        <div class="eps">${inZ?'✅ Vous êtes dedans':'Attendre ce niveau'}</div>
+      </div>
+      <div class="epb ep-s">
+        <div class="epv">${s.stop}€</div>
+        <div class="eplb">Stop Loss</div>
+        <div class="eps">Risque : ${((s.price-s.stop)/s.price*100).toFixed(1)}% du capital</div>
+      </div>
+      <div class="epb ep-o">
+        <div class="epv">${s.o1}€</div>
+        <div class="eplb">Objectif 1</div>
+        <div class="eps">Potentiel : +${((s.o1-s.price)/s.price*100).toFixed(1)}%</div>
+      </div>
+      <div class="epb ep-r">
+        <div class="epv">${rr}x</div>
+        <div class="eplb">Ratio R/R</div>
+        <div class="eps">${rr>=2?'✅ Favorable':rr>=1?'⚠️ Correct':'❌ Insuffisant'}</div>
+      </div>
+    </div>
+    <div class="sig-row">
+      <span class="sig-lbl">Signal global</span>
+      <div class="sig-trk"><div class="sig-nd" style="left:${Math.min(95,Math.max(5,
+        (s.score==='A'&&inZ?80:s.score==='A'?65:s.score==='B'&&inZ?70:s.score==='B'?55:s.score==='C'?35:20)
+      ))+'%'}"></div></div>
+      <span class="sig-val" style="color:${s.score==='A'?'var(--gn)':s.score==='B'?'var(--gd)':s.score==='C'?'var(--or)':'var(--rd)'}">${s.score==='A'&&inZ?'FORT 🟢':s.score==='A'?'BON':s.score==='B'&&inZ?'BON 🟢':s.score==='B'?'MOYEN':'FAIBLE'}</span>
+    </div>
+    <div class="sig-row" style="margin-top:4px">
+      <span class="sig-lbl">RSI ${s.rsi}</span>
+      <div class="sig-trk"><div class="sig-nd" style="left:${Math.min(95,Math.max(5,s.rsi))+'%'}"></div></div>
+      <span class="sig-val" style="color:${s.rsi>70?'var(--rd)':s.rsi<30?'var(--gn)':'var(--mu)'}">${rsiL(s.rsi)}</span>
+    </div>
+  </div>
+</div>
+
+<div class="sec">
+  <div class="sct">Valorisation & Rentabilité — 10 Indicateurs Fondamentaux</div>
+  <div class="mg5">${fundMets.map(m=>`<div class="mb ${mc(m.k,m.v)}"><div class="ml">${m.l}</div><div class="mv">${m.v}${m.u}</div><div class="ms">${m.d}</div></div>`).join('')}</div>
+</div>
+
+<div class="sec">
+  <div class="sct">Bilan, Cash Flow & CAPEX — Solidité Financière</div>
+  <div class="mg5">${balMets.map(m=>`<div class="mb ${mc(m.k,typeof m.v==='number'?m.v:0)}"><div class="ml">${m.l}</div><div class="mv">${m.v}${typeof m.v==='number'?m.u:''}</div><div class="ms">${m.d}</div></div>`).join('')}</div>
+  <div style="margin-top:6px;font-size:9px;color:var(--mu);font-style:italic">CAPEX/Amortissements : ${capR} — CAPEX ${s.capex}Md€ · Intensité capitalistique : ${s.capr<5?'<span style="color:var(--gn)">Légère</span>':s.capr<12?'<span style="color:var(--gd)">Modérée</span>':'<span style="color:var(--or)">Lourde</span>'}</div>
+</div>
+
+<div class="sec">
+  <div class="sct">Scores de Solidité & Momentum Technique</div>
+  <div class="tc">
+    <div>
+      <div class="sr">
+        <div class="sb"><div class="sbv ${piCl(s.pio)}">${s.pio}/9</div><div class="sbl">Piotroski F</div><div class="sbd">${piL(s.pio)}</div></div>
+        <div class="sb"><div class="sbv ${alCl(s.alt)}">${s.alt}</div><div class="sbl">Altman Z</div><div class="sbd">${alL(s.alt)}</div></div>
+        <div class="sb"><div class="sbv sN">${s.rsi}</div><div class="sbl">RSI 14j</div><div class="sbd">${rsiL(s.rsi)}</div></div>
+        <div class="sb"><div class="sbv" style="color:${uCol}">${parseFloat(u)>0?'+':''}${u}%</div><div class="sbl">Upside DCF</div><div class="sbd">Base case</div></div>
+      </div>
+      <div class="mm-row">
+        <div class="mmb"><div class="mmv" style="color:${parseFloat(m50d)>=0?'var(--gn)':'var(--rd)'}">${parseFloat(m50d)>=0?'+':''}${m50d}%</div><div class="mml">vs MM50 (${s.mm50}€)</div></div>
+        <div class="mmb"><div class="mmv" style="color:${parseFloat(m200d)>=0?'var(--gn)':'var(--rd)'}">${parseFloat(m200d)>=0?'+':''}${m200d}%</div><div class="mml">vs MM200 (${s.mm200}€)</div></div>
+      </div>
+    </div>
+    <div>
+      <div class="dcfg">
+        <div class="dcfb" style="border-top:2px solid var(--rd)"><div class="dcfs">Bear Case</div><div class="dcfv">${s.dcfb}€</div><div class="dcfu" style="color:${uc(ub)}">${parseFloat(ub)>0?'+':''}${ub}%</div></div>
+        <div class="dcfb" style="border-top:2px solid var(--gd);background:var(--gdm)"><div class="dcfs">Base Case</div><div class="dcfv" style="font-weight:700">${s.dcfm}€</div><div class="dcfu" style="color:${uCol};font-weight:600">${parseFloat(u)>0?'+':''}${u}%</div></div>
+        <div class="dcfb" style="border-top:2px solid var(--gn)"><div class="dcfs">Bull Case</div><div class="dcfv">${s.dcfu}€</div><div class="dcfu" style="color:var(--gn)">+${ubs}%</div></div>
+      </div>
+      <div style="margin-top:5px;font-size:8px;color:var(--mu2);font-style:italic">WACC 8% · Croissance terminale 2% · 10 ans</div>
+    </div>
+  </div>
+</div>
+
+<div class="sec">
+  <div class="sct">Avantages Compétitifs (Moat) & Consensus Analystes</div>
+  <div class="tc">
+    <div>${s.moat.map(([l,str])=>`<div class="mi"><span style="font-size:12px">${str==='fort'?'🏰':str==='mod'?'🔷':'⚠️'}</span><span style="flex:1">${l}</span><span class="mip ${str==='fort'?'mf':str==='mod'?'mm2':'mw'}">${str==='fort'?'Fort':'Modéré'}</span></div>`).join('')}</div>
+    <div>
+      <div class="ctop">
+        <div class="cons-n2"><div class="cnv" style="color:var(--gn)">${s.cb}</div><div class="cnl">Achat</div></div>
+        <div class="cons-n2"><div class="cnv" style="color:var(--gd)">${s.ch}</div><div class="cnl">Neutre</div></div>
+        <div class="cons-n2"><div class="cnv" style="color:var(--rd)">${s.cs}</div><div class="cnl">Vente</div></div>
+        <div class="cons-n2" style="border-left:1px solid var(--bd);padding-left:10px"><div class="cnv" style="color:var(--nv)">${s.tp}€</div><div class="cnl">Objectif</div></div>
+      </div>
+      <div class="abar"><span class="al">Achat</span><div class="at"><div class="af" style="width:${(s.cb/tot*100).toFixed(0)}%;background:var(--gn)"></div></div><span class="ac">${s.cb}</span></div>
+      <div class="abar"><span class="al">Neutre</span><div class="at"><div class="af" style="width:${(s.ch/tot*100).toFixed(0)}%;background:var(--gd)"></div></div><span class="ac">${s.ch}</span></div>
+      <div class="abar"><span class="al">Vente</span><div class="at"><div class="af" style="width:${(s.cs/tot*100).toFixed(0)}%;background:var(--rd)"></div></div><span class="ac">${s.cs}</span></div>
+    </div>
+  </div>
+</div>
+
+<div class="sec">
+  <div class="sct">Comparaison Sectorielle — Peer Group</div>
+  <table class="pt">
+    <thead><tr><th>Société</th><th>P/E</th><th>P/B</th><th>ROE%</th><th>Div%</th><th>EV/EBITDA</th></tr></thead>
+    <tbody>
+      <tr class="cur"><td>★ ${s.ticker} — ${s.name}</td><td>${s.pe}x</td><td>${s.pb}x</td><td>${s.roe}%</td><td>${s.yield}%</td><td>${s.ev_ebitda}x</td></tr>
+      ${s.peers.map(p=>`<tr><td>${p.n}</td><td>${p.pe||'—'}x</td><td>${p.pb||'—'}x</td><td>${p.roe||'—'}%</td><td>${p.div||'—'}%</td><td>${p.evebitda||'—'}x</td></tr>`).join('')}
+    </tbody>
+  </table>
+</div>
+
+<div class="sec">
+  <div class="sct">Thèse d'Investissement & Contra (Cabinet Concurrent)</div>
+  <div class="thesis">${s.thesis}</div>
+  <div class="contra"><div class="contra-t">⚔️ Cabinet concurrent — Thèse baissière (Points à surveiller)</div>${s.contra}</div>
+</div>
+
+<div class="sec">
+  <div class="sct">Track Record Direction — Promesses vs Réalisé</div>
+  <div class="tc">
+    <div>
+      ${s.track.map(t=>`<div class="tr-i"><span class="try">${t.y}</span><span class="trp">${t.p}</span><span class="trr" style="color:${t.ok==='ok'?'var(--gn)':t.ok==='partial'?'var(--gd)':'var(--rd)'}">${t.r}</span><span class="trb ${t.ok==='ok'?'tr-ok':t.ok==='partial'?'tr-p':'tr-m'}">${t.ok==='ok'?'Tenu':t.ok==='partial'?'Partiel':'Raté'}</span></div>`).join('')}
+    </div>
+    <div class="trs">
+      <div class="trs-v ${trCl(tpct)}" style="color:${tpct>=75?'var(--gn)':tpct>=50?'var(--gd)':'var(--rd)'}">${tpct}%</div>
+      <div class="trs-l">Fiabilité Direction</div>
+      <div style="font-size:9px;color:var(--mu);margin-top:5px">${tpct>=75?'Management crédible — Acheter au discours':'Management à vérifier — Pondérer les guidances'}</div>
+    </div>
+  </div>
+</div>
+
+<div class="sec">
+  <div class="sct">Catalyseurs & Transactions Dirigeants</div>
+  <div class="tc">
+    <div>${s.cats.map(c=>`<div class="cat-i"><div class="cat-dot" style="background:${c.c}"></div><span class="cat-w">${c.w}</span><span>${c.t}</span></div>`).join('')}</div>
+    <div>${s.ins.map(([tp,wh,am,dt])=>`<div class="ii"><span class="it ${tp==='Achat'?'ita':'itv'}">${tp}</span><span class="iw">${wh}</span><span style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--mu)">${am}</span><span style="font-size:8px;color:var(--mu2);margin-left:4px">${dt}</span></div>`).join('')}</div>
+  </div>
+</div>
+
+<div class="sec">
+  <div class="sct">Matrice des Risques — 6 Dimensions</div>
+  ${Object.entries(s.risks).map(([k,v])=>`<div class="rrow"><span class="rl">${k}</span><div class="rbar"><div class="rf" style="width:${v}%;background:${rc(v)}"></div></div><span class="rn" style="color:${rc(v)}">${v}/100</span></div>`).join('')}
+</div>
+
+<div class="ffoot">
+  <span class="fn">⚠️ Données éducatives uniquement · Pas de conseil en investissement · Consulter un CIF agréé AMF</span>
+  <span class="fn">PEA Screener Pro · ${ts}</span>
+</div>`;
+
+  const fe=document.getElementById('fiche');
+  fe.innerHTML=html;
+  document.getElementById('lc').style.display='none';
+  fe.style.display='block';
+  updHK();
+  // TradingView chart
+  setTimeout(function(){loadTV(s);loadMM200Banner(s);},100);
+}
+
+function loadTV(s){
+  const wrap=document.getElementById('tv-chart');
+  if(!wrap)return;
+  // Mapping ticker PEA -> symbole TradingView exact
+  const tvMap={
+    'MC':'EURONEXT:MC','AI':'EURONEXT:AI','OR':'EURONEXT:OR','GTT':'EURONEXT:GTT',
+    'SAF':'EURONEXT:SAF','SAN':'EURONEXT:SAN','TTE':'EURONEXT:TTE','COFA':'EURONEXT:COFA',
+    'MERY':'EURONEXT:MRY','RNO':'EURONEXT:RNO','JXS':'EURONEXT:JXS'
+  };
+  const sym=tvMap[s.ticker]||('EURONEXT:'+s.ticker);
+  const cfg={
+    autosize:true,symbol:sym,interval:'W',timezone:'Europe/Paris',
+    theme:'dark',style:'1',locale:'fr',backgroundColor:'rgba(15,37,64,1)',
+    gridColor:'rgba(255,255,255,0.05)',hide_top_toolbar:false,hide_legend:false,
+    allow_symbol_change:false,save_image:false,calendar:false,hide_volume:true,
+    studies:['STD;MA%Ribbon','STD;RSI'],
+    overrides:{'mainSeriesProperties.candleStyle.upColor':'#1a6b3a','mainSeriesProperties.candleStyle.downColor':'#c0392b'}
+  };
+  wrap.innerHTML=`<div class="tradingview-widget-container" style="height:320px">
+    <div class="tradingview-widget-container__widget"></div>
+    <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js" async>
+    ${JSON.stringify(cfg)}
+    <\/script></div>`;
+}
+
+function loadMM200Banner(s){
+  const b=document.getElementById('mm200-banner');
+  if(!b)return;
+  const aboveMM200=s.price>s.mm200;
+  const pct=((s.price-s.mm200)/s.mm200*100).toFixed(1);
+  const m50Above=s.mm50>s.mm200;
+  // Dow Theory signal
+  const dow=aboveMM200&&m50Above?'bull':!aboveMM200&&!m50Above?'bear':'neut';
+  const dowLbl={'bull':'📈 Tendance HAUSSIÈRE','bear':'📉 Tendance BAISSIÈRE','neut':'➡️ Tendance NEUTRE'};
+  const dowTxt={'bull':'Cours & MM50 au-dessus de la MM200 — Dow Theory confirme la hausse','bear':'Cours & MM50 sous la MM200 — Signal de prudence, risque de poursuite baissière','neut':'Signal mixte — Attendre une clarification de tendance'};
+  b.className=aboveMM200?'mm200-ok':'mm200-warn';
+  b.innerHTML='<span style="font-size:14px">'+(aboveMM200?'🟢':'🔴')+'</span>'+
+    '<span><b>MM200 : '+s.mm200+'€</b> — Cours '+(aboveMM200?'dessus (+':'dessous (')+Math.abs(pct)+'%) · </span>'+
+    '<span class="dow-signal dow-'+dow+'">'+dowLbl[dow]+'</span>'+
+    '<span style="margin-left:8px;opacity:.8">'+dowTxt[dow]+'</span>';
+}
+
+// ═══════════ QUEUE ═══════════
+function buildQ(){
+  const l=document.getElementById('ql');
+  l.innerHTML=fil.map((s,i)=>`<div class="qi${i===idx?' active':''}" onclick="jump(${i})"><span class="qi-n">${i+1}</span><span class="qi-t">${s.ticker}</span><span class="qi-nm">${s.name}</span><span class="qg ${qGCl(s.score)}">${s.score}</span></div>`).join('');
+  document.getElementById('qcnt').textContent=fil.length+' val.';
+  const a=l.querySelector('.active');
+  if(a)a.scrollIntoView({block:'nearest'});
+}
+function updHK(){
+  const pct=Math.round((idx+1)/fil.length*100);
+  document.getElementById('pgb').style.width=pct+'%';
+  document.getElementById('hkP').textContent=pct+'%';
+  document.getElementById('hkT').textContent=S.length;
+  document.getElementById('hkD').textContent=cycles*fil.length+idx+1;
+  document.getElementById('hkAB').textContent=S.filter(s=>s.score==='A'||s.score==='B').length;
+  document.getElementById('hkZ').textContent=S.filter(s=>s.zone||(s.price>=s.el&&s.price<=s.eh)).length;
+}
+
+// ═══════════ CONTROLS ═══════════
+function filt(f,btn){
+  document.querySelectorAll('.h-ctrl .fb').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  const m={all:()=>S,large:()=>S.filter(s=>s.cap==='large'),mid:()=>S.filter(s=>s.cap==='mid'),
+   small:()=>S.filter(s=>s.cap==='small'),srd:()=>S.filter(s=>s.srd),A:()=>S.filter(s=>s.score==='A'),
+   buy:()=>S.filter(s=>s.rec==='buy'),rend:()=>S.filter(s=>s.yield>=5),
+   zone:()=>S.filter(s=>s.price>=s.el&&s.price<=s.eh||s.zone)};
+  fil=(m[f]||m.all)();idx=0;cycles=0;show(0);buildQ();
+}
+function setSpd(v){spd=parseInt(v);document.getElementById('spL').textContent=v+'s';if(!paused){clearInterval(tmr);startR();}}
+function tPause(){
+  paused=!paused;
+  document.getElementById('pbtn').textContent=paused?'▶ Reprendre':'⏸ Pause';
+  if(paused)clearInterval(tmr);else startR();
+}
+function jump(i){idx=i;show(i);buildQ();}
+function startR(){tmr=setInterval(()=>{idx++;if(idx>=fil.length){idx=0;cycles++;}show(idx);buildQ();},spd*1000);}
+
+// ═══════════ PAGE SWITCH ═══════════
+function showPg(pg,btn){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.ntab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('pg-'+pg).classList.add('active');
+  btn.classList.add('active');
+  if(pg==='tb')buildT(S);
+  if(pg==='lx')buildLex();
+  if(pg==='etf')buildETF();
+}
+
+// ═══════════ RECAP TABLE ═══════════
+function buildT(data){
+  document.getElementById('rtbody').innerHTML=data.map(s=>{
+    const u=up(s);const inZ=s.price>=s.el&&s.price<=s.eh||s.zone;
+    const gr={A:'qA',B:'qB',C:'qC',D:'qD'};
+    return `<tr class="${inZ?'zone-row':''}">
+      <td onclick="goStock('${s.ticker}')">${s.ticker}${inZ?'📍':''}</td>
+      <td>${s.name}</td>
+      <td><span class="rtg ${gr[s.score]||'qC'}">${s.score}</span></td>
+      <td><span class="rb ${rCl(s.rec)}" style="padding:1px 4px;font-size:7px">${s.rec.toUpperCase()}</span></td>
+      <td>${s.price}€</td>
+      <td style="color:var(--gn)">${s.el}–${s.eh}€</td>
+      <td style="color:var(--rd)">${s.stop}€</td>
+      <td style="color:var(--bl)">${s.o1}€</td>
+      <td style="color:${rratio(s)>=2?'var(--gn)':rratio(s)>=1?'var(--gd)':'var(--rd)'}">${rratio(s)}x</td>
+      <td>${s.dcfm}€</td>
+      <td style="color:${uc(u)};font-weight:600">${parseFloat(u)>0?'+':''}${u}%</td>
+      <td style="color:${mc('pe',s.pe)==='good'?'var(--gn)':mc('pe',s.pe)==='bad'?'var(--rd)':'inherit'}">${s.pe}x</td>
+      <td>${s.pb}x</td><td>${s.ev_ebitda}x</td><td>${s.ps}x</td>
+      <td style="color:${mc('roe',s.roe)==='good'?'var(--gn)':mc('roe',s.roe)==='bad'?'var(--rd)':'inherit'}">${s.roe}%</td>
+      <td>${s.roic}%</td><td>${s.roa}%</td>
+      <td style="color:${mc('debt',s.debt)==='bad'?'var(--rd)':mc('debt',s.debt)==='warn'?'var(--or)':'inherit'}">${s.debt}x</td>
+      <td>${s.ic===999?'∞':s.ic}x</td>
+      <td style="color:${s.yield>=5?'var(--gn)':'inherit'}">${s.yield}%</td>
+      <td>${s.margin}%</td><td>${s.gm}%</td>
+      <td style="color:${mc('fcf',s.fcf)==='good'?'var(--gn)':'inherit'}">${s.fcf}%</td>
+      <td style="color:${mc('capr',s.capr)==='good'?'var(--gn)':mc('capr',s.capr)==='warn'?'var(--or)':'inherit'}">${s.capr}%</td>
+      <td style="color:${s.epsg>=10?'var(--gn)':s.epsg<0?'var(--rd)':'inherit'}">${s.epsg}%</td>
+      <td style="color:${s.pio>=7?'var(--gn)':s.pio<=3?'var(--rd)':'inherit'}">${s.pio}/9</td>
+      <td style="color:${s.alt>3?'var(--gn)':s.alt<1.8&&s.alt>0?'var(--rd)':'var(--gd)'}">${s.alt||'—'}</td>
+      <td>${s.rsi}</td>
+      <td><span class="tag t-cap" style="font-size:7px">${cL[s.cap]}</span></td>
+    </tr>`;
+  }).join('');
+}
+function tf(f,btn){
+  document.querySelectorAll('#pg-tb .fb').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  const m={all:S,A:S.filter(s=>s.score==='A'),AB:S.filter(s=>s.score==='A'||s.score==='B'),
+   buy:S.filter(s=>s.rec==='buy'),zone:S.filter(s=>s.price>=s.el&&s.price<=s.eh||s.zone),
+   rend:S.filter(s=>s.yield>=5)};
+  buildT(m[f]||S);
+}
+function srt(col){
+  if(srtC===col)srtD*=-1;else{srtC=col;srtD=1;}
+  const colMap={ticker:'ticker',name:'name',score:'score',rec:'rec',price:'price',entry_low:'el',
+   stop:'stop',obj1:'o1',rr:null,dcf_base:'dcfm',upside:null,pe:'pe',pb:'pb',ev_ebitda:'ev_ebitda',
+   ps:'ps',roe:'roe',roic:'roic',roa:'roa',debt:'debt',ic:'ic',yield:'yield',margin:'margin',
+   gross_margin:'gm',fcf:'fcf',capex_rev:'capr',eps_growth:'epsg',piotroski:'pio',altman:'alt',rsi:'rsi',cap:'cap'};
+  const fld=colMap[col];
+  const d=[...S].sort((a,b)=>{
+    let va=fld?a[fld]||0:0,vb=fld?b[fld]||0:0;
+    if(col==='upside'){va=parseFloat(up(a));vb=parseFloat(up(b));}
+    if(col==='rr'){va=parseFloat(rratio(a))||0;vb=parseFloat(rratio(b))||0;}
+    if(typeof va==='string')return srtD*(va.localeCompare(vb));
+    return srtD*(va-vb);
+  });
+  buildT(d);
+}
+function goStock(ticker){
+  const i=S.findIndex(s=>s.ticker===ticker);
+  if(i<0)return;
+  idx=i;fil=[...S];
+  showPg('sc',document.querySelectorAll('.ntab')[0]);
+  show(i);buildQ();
+}
+
+// ═══════════ LEXIQUE ═══════════
+const LEX=[
+ {term:'P/E (Price/Earnings)',cat:'v',short:'Combien l\'investisseur paie pour 1€ de bénéfice.',
+  formula:'Cours / BPA annuel',
+  interp:'<span class="lex-good">< 12 : Sous-valorisé</span> · <span class="lex-warn">12-25 : Normal</span> · <span class="lex-bad">> 30 : Cher</span>',
+  ex:'LVMH à 22x PE = vous payez 22€ pour 1€ de bénéfice annuel prévisible. P/E bas ≠ forcément bon si les bénéfices vont baisser.'},
+ {term:'EV/EBITDA',cat:'v',short:'Valorisation de l\'entreprise entière (dette incluse) vs son profit opérationnel brut.',
+  formula:'(Capitalisation + Dette nette) / EBITDA',
+  interp:'<span class="lex-good">< 8x : Bon marché</span> · <span class="lex-warn">8-14x : Normal</span> · <span class="lex-bad">> 16x : Cher</span>',
+  ex:'TotalEnergies à 5x EV/EBITDA = très bon marché. GTT à 15x = prime justifiée par le monopole.'},
+ {term:'P/B (Price/Book)',cat:'v',short:'Le cours vs la valeur comptable nette des actifs de la société.',
+  formula:'Cours / Actif Net Comptable par action',
+  interp:'<span class="lex-good">< 1 : Décote sur actifs</span> · <span class="lex-warn">1-3 : Standard</span> · <span class="lex-bad">> 5 : Prime élevée</span>',
+  ex:'SocGen à 0.5x PB = vous achetez 1€ d\'actifs pour 50 centimes. Mais ces actifs peuvent valoir moins en réalité.'},
+ {term:'P/S (Price/Sales)',cat:'v',short:'Le cours vs le chiffre d\'affaires. Utile quand les bénéfices sont négatifs.',
+  formula:'Capitalisation boursière / Chiffre d\'affaires annuel',
+  interp:'<span class="lex-good">< 1 : Très bon marché</span> · <span class="lex-warn">1-3 : Raisonnable</span> · <span class="lex-bad">> 5 : Premium</span>',
+  ex:'GTT à 9.2x P/S reflète sa marge nette de 58% — justifié. Renault à 0.2x P/S traduit les marges très faibles de l\'automobile.'},
+ {term:'P/FCF (Price/Free Cash Flow)',cat:'v',short:'Le vrai P/E basé sur le cash effectivement généré, pas les bénéfices comptables.',
+  formula:'Cours / FCF par action',
+  interp:'<span class="lex-good">< 12x : Très attractif</span> · <span class="lex-warn">12-20x : Correct</span> · <span class="lex-bad">> 25x : Cher</span>',
+  ex:'Toujours comparer P/FCF et P/E : si P/FCF >> P/E, les bénéfices comptables sont "trop beaux" vs le cash réel.'},
+ {term:'DCF (Discounted Cash Flow)',cat:'v',short:'Valorisation intrinsèque : la valeur actuelle de tous les flux futurs actualisés.',
+  formula:'Valeur = Σ (FCF_n / (1+WACC)^n) + Valeur terminale',
+  interp:'Upside > 20% = opportunité · Upside 0-20% = correctement valorisé · Upside négatif = surévalué',
+  ex:'LVMH : DCF base 680€ vs cours 598€ = +14% d\'upside théorique. Le DCF dépend des hypothèses (WACC, croissance).'},
+ {term:'Ratio R/R (Risque/Rendement)',cat:'v',short:'Pour 1€ risqué (stop-loss), combien de potentiel jusqu\'à l\'objectif.',
+  formula:'(Objectif - Cours) / (Cours - Stop Loss)',
+  interp:'<span class="lex-good">R/R > 2 : Excellent</span> · <span class="lex-warn">R/R 1-2 : Correct</span> · <span class="lex-bad">R/R < 1 : Défavorable</span>',
+  ex:'Cours 100€, Stop 90€, Objectif 130€ → R/R = (130-100)/(100-90) = 3x. Pour 10€ risqués, 30€ potentiels.'},
+ {term:'ROE (Return on Equity)',cat:'r',short:'Combien de profit la société génère pour chaque euro de fonds propres investis.',
+  formula:'Résultat net / Capitaux propres × 100',
+  interp:'<span class="lex-good">> 18% : Excellent</span> · <span class="lex-warn">9-18% : Correct</span> · <span class="lex-bad">< 9% : Faible</span>',
+  ex:'GTT ROE 85% = exceptionnel. Air Liquide ROE 16% = solide mais banale. Attention : ROE élevé peut venir d\'un endettement fort.'},
+ {term:'ROIC (Return on Invested Capital)',cat:'r',short:'Le rendement sur l\'ensemble du capital investi (fonds propres + dette). Plus juste que le ROE.',
+  formula:'NOPAT / (Fonds propres + Dette nette)',
+  interp:'<span class="lex-good">> 13% : Crée de la valeur</span> · <span class="lex-warn">7-13% : OK</span> · <span class="lex-bad">< 7% : Détruit de la valeur</span>',
+  ex:'La règle d\'or : si ROIC > WACC (coût du capital ~8%), la société crée de la valeur. Si ROIC < WACC, elle détruit de la valeur même si elle est "profitable".'},
+ {term:'ROA (Return on Assets)',cat:'r',short:'Rentabilité par rapport à l\'ensemble des actifs du bilan.',
+  formula:'Résultat net / Total actif × 100',
+  interp:'<span class="lex-good">> 10% : Très efficace</span> · <span class="lex-warn">5-10% : Normal</span> · <span class="lex-bad">< 5% : Actifs lourds</span>',
+  ex:'GTT ROA 52% = extraordinaire (actifs légers, IP pur). Air Liquide ROA 8% = actifs lourds (pipelines, usines) mais stables.'},
+ {term:'Marge Nette',cat:'r',short:'% du chiffre d\'affaires qui devient profit final après toutes les charges.',
+  formula:'Résultat net / Chiffre d\'affaires × 100',
+  interp:'<span class="lex-good">> 18% : Premium</span> · <span class="lex-warn">8-18% : Correct</span> · <span class="lex-bad">< 5% : Mince</span>',
+  ex:'GTT 58% marge = exceptionnelle (IP pur). L\'Oréal 20% = très bien pour la grande conso. Renault 6% = marge auto normale mais vulnérable.'},
+ {term:'Marge Brute',cat:'r',short:'% de CA restant après les coûts directs de production. Mesure le pricing power.',
+  formula:'(CA - Coût des ventes) / CA × 100',
+  interp:'<span class="lex-good">> 50% : Pricing power fort</span> · <span class="lex-warn">30-50% : Moyen</span> · <span class="lex-bad">< 25% : Faible</span>',
+  ex:'L\'Oréal 74% marge brute = énorme pricing power sur les cosmétiques. Renault 20% = marges auto très comprimées par les coûts matières.'},
+ {term:'FCF Yield (Free Cash Flow Yield)',cat:'r',short:'Le flux de trésorerie libre disponible pour l\'actionnaire, rapporté au cours.',
+  formula:'FCF par action / Cours × 100',
+  interp:'<span class="lex-good">> 7% : Généreux</span> · <span class="lex-warn">3-7% : Correct</span> · <span class="lex-bad">< 3% : Maigre</span>',
+  ex:'Coface FCF yield 9.2% = excellent. Le FCF yield > dividende yield signifie que le dividende est bien couvert et durable.'},
+ {term:'Dette/EBITDA',cat:'k',short:'Nombre d\'années de profit opérationnel pour rembourser toute la dette.',
+  formula:'Dette nette / EBITDA annuel',
+  interp:'<span class="lex-good">< 1x : Faible dette</span> · <span class="lex-warn">1-2.5x : Modéré</span> · <span class="lex-bad">> 3x : Élevé</span>',
+  ex:'GTT 0x (pas de dette) = bilan de forteresse. TotalEnergies 1.5x = raisonnable pour une major pétrolière. Altarea 3.8x = élevé, vulnérable aux taux.'},
+ {term:'Interest Coverage (Couverture des intérêts)',cat:'k',short:'Combien de fois l\'EBIT couvre les charges d\'intérêt annuelles.',
+  formula:'EBIT / Charges financières annuelles',
+  interp:'<span class="lex-good">> 8x : Très solide</span> · <span class="lex-warn">3-8x : Correct</span> · <span class="lex-bad">< 2x : Risqué</span>',
+  ex:'Air Liquide 12.4x = très solide. Si ce ratio < 1.5x, la société risque la défaillance en cas de baisse des profits.'},
+ {term:'Current Ratio (Ratio de liquidité courante)',cat:'k',short:'Capacité à payer les dettes court terme avec les actifs court terme.',
+  formula:'Actifs courants / Passifs courants',
+  interp:'<span class="lex-good">> 2 : Très solide</span> · <span class="lex-warn">1-2 : Correct</span> · <span class="lex-bad">< 1 : Tension liquidité</span>',
+  ex:'GTT Current Ratio 3.2 = très solide. Les banques ont un ratio de 0 (modèle différent) — ne pas comparer avec les autres secteurs.'},
+ {term:'Piotroski F-Score',cat:'k',short:'Score 0-9 mesurant la solidité financière sur 9 critères binaires (rentabilité, levier, efficacité).',
+  formula:'Somme de 9 critères : ROA>0, ΔCF>0, ΔROA>0, Accruals<0, ΔLevier<0, ΔLiquidité>0, ΔActions=0, ΔMarge>0, ΔRotation>0',
+  interp:'<span class="lex-good">8-9 : Excellent</span> · <span class="lex-warn">5-7 : Solide</span> · <span class="lex-bad">< 4 : Fragile</span>',
+  ex:'GTT Piotroski 9/9 = société financièrement parfaite. Un score < 3 signale souvent une société en difficulté structurelle avant que le marché le réalise.'},
+ {term:'Altman Z-Score',cat:'k',short:'Modèle statistique prédisant la probabilité de faillite dans les 2 ans.',
+  formula:'1.2×(BFR/Actifs) + 1.4×(Bénéfices/Actifs) + 3.3×(EBIT/Actifs) + 0.6×(Marché/Dettes) + CA/Actifs',
+  interp:'<span class="lex-good">> 3 : Zone sûre</span> · <span class="lex-warn">1.8-3 : Zone grise</span> · <span class="lex-bad">< 1.8 : Danger faillite</span>',
+  ex:'GTT Z-Score 8.2 = ultra-solide. Attention : les banques et assurances ont un Z-Score de 0 car le modèle ne s\'applique pas à leur structure de bilan.'},
+ {term:'Bêta (β)',cat:'k',short:'Sensibilité du titre aux mouvements du marché (CAC 40).',
+  formula:'Covariance(titre,marché) / Variance(marché)',
+  interp:'<span class="lex-good">β < 0.7 : Défensif</span> · <span class="lex-warn">β 0.7-1.2 : Normal</span> · <span class="lex-bad">β > 1.5 : Volatile</span>',
+  ex:'Air Liquide β 0.6 = défensif (monte moins que le marché mais chute aussi moins). Renault β 1.8 = cyclique et volatile.'},
+ {term:'RSI (Relative Strength Index)',cat:'t',short:'Oscillateur technique 0-100 mesurant la force/faiblesse des variations récentes.',
+  formula:'RSI = 100 - 100/(1 + (Moyenne hausses 14j / Moyenne baisses 14j))',
+  interp:'<span class="lex-bad">> 70 : Suracheté (prudence)</span> · <span class="lex-good">< 30 : Survendu (opportunité)</span> · <span class="lex-warn">45-55 : Neutre</span>',
+  ex:'L\'Oréal RSI 49 = neutre, ni suracheté ni survendu. TotalEnergies RSI 44 = légèrement baissier, potentielle zone d\'accumulation.'},
+ {term:'MM50 & MM200 (Moyennes Mobiles)',cat:'t',short:'Prix moyen des 50 et 200 dernières séances. Indicateurs de tendance.',
+  formula:'MM50 = Moyenne des cours des 50 derniers jours',
+  interp:'Cours > MM200 = tendance haussière · Cours < MM200 = tendance baissière · MM50 croise MM200 vers le haut = "Golden Cross" haussier',
+  ex:'SAF +5% vs MM50 et +12% vs MM200 = tendance haussière forte. TTE -5% vs MM200 = tendance baissière, attendre confirmation.'},
+ {term:'Supports & Résistances',cat:'t',short:'Niveaux de prix où historiquement les acheteurs (support) ou vendeurs (résistance) dominent.',
+  formula:'Identification visuelle sur les graphiques (pics/creux récurrents)',
+  interp:'Zone de support = prix d\'achat privilégié · Résistance franchie = nouveau support · Stop-loss toujours sous le support',
+  ex:'Zone d\'achat L\'Oréal 315-348€ = entre support technique et zone de valeur fondamentale. Stop 290€ = sous le support majeur.'},
+ {term:'CAPEX (Capital Expenditure)',cat:'s',short:'Investissements en actifs physiques (usines, machines, équipements) nécessaires à l\'activité.',
+  formula:'Figurent dans le tableau de flux de trésorerie',
+  interp:'CAPEX/CA < 5% = actif léger · 5-12% = modéré · > 15% = très capitalistique',
+  ex:'GTT CAPEX 1.5% du CA = modèle IP pur, quasi pas d\'investissements. Air Liquide 14.8% = infrastructure lourde (pipelines, usines). Le CAPEX/Amortissements > 1 signale une phase d\'expansion.'},
+ {term:'CAPEX/Amortissements',cat:'s',short:'Ratio mesurant si la société investit pour croître ou juste maintenir ses actifs existants.',
+  formula:'CAPEX annuel / Dotations aux amortissements',
+  interp:'<span class="lex-bad">< 0.8 : Sous-investissement (attrition)</span> · <span class="lex-warn">0.8-1.2 : Maintenance</span> · <span class="lex-good">> 1.5 : Expansion</span>',
+  ex:'Air Liquide CAPEX/DA 1.4x = en expansion modérée. Mersen 1.5x = expansion forte (SiC). Un ratio < 0.7 sur plusieurs années signale un actif en fin de vie.'},
+ {term:'Moat (Fossé économique)',cat:'s',short:'Avantage concurrentiel durable qui protège les marges et parts de marché sur le long terme.',
+  formula:'Qualitatif : brevets, effets réseau, coûts de changement, économies d\'échelle, marques',
+  interp:'Fort = 15+ ans de protection · Modéré = 5-15 ans · Faible = facilement attaquable',
+  ex:'GTT : monopole de brevets = moat absolu. L\'Oréal : 37 marques + R&D = moat très fort. Renault : quelques avantages mais facilement attaqués par BYD.'},
+ {term:'Piotroski vs Track Record',cat:'s',short:'Deux mesures complémentaires : l\'une quantitative (solidité bilan), l\'autre qualitative (crédibilité direction).',
+  formula:'Piotroski = état financier actuel · Track Record = fiabilité des guidances sur 3 ans',
+  interp:'Idéal : Piotroski 7+ ET Track Record 75%+. Danger : bilan solide mais direction qui ment → risque de surprise négative.',
+  ex:'SAF : Piotroski 8 + Track Record 100% = management ultra-crédible. Renault : Piotroski 6 + Track Record 50% = à surveiller.'},
+ {term:'Score Altman pour les banques',cat:'k',short:'Attention : le Z-Score d\'Altman ne s\'applique PAS aux banques et assurances.',
+  formula:'Le modèle a été conçu pour les entreprises industrielles',
+  interp:'Pour les banques, utiliser : CET1 (> 12% = solide), ROE vs COE, NII spread',
+  ex:'BNP Altman = 0 dans notre screener = non applicable (banque). Utiliser à la place CET1 13.5%, ROE 11%, coefficient d\'exploitation 65%.'},
+ {term:'EV/EBIT vs EV/EBITDA',cat:'v',short:'EV/EBIT tient compte des amortissements — plus conservateur pour les actifs lourds.',
+  formula:'EV/EBIT = (Capitalisation + Dette) / (EBITDA - Amortissements)',
+  interp:'Pour les actifs légers (IP, logiciel) : EV/EBITDA suffit. Pour les actifs lourds : préférer EV/EBIT car les amortissements sont réels.',
+  ex:'Air Liquide EV/EBITDA 16x vs EV/EBIT 19x : l\'écart montre l\'importance des amortissements de ses actifs lourds.'},
+ {term:'Debt/Equity (Gearing)',cat:'k',short:'Ratio d\'endettement : la dette nette comparée aux fonds propres.',
+  formula:'Dette nette / Capitaux propres',
+  interp:'<span class="lex-good">< 0.5 : Peu endetté</span> · <span class="lex-warn">0.5-1 : Modéré</span> · <span class="lex-bad">> 1.5 : Très endetté</span>',
+  ex:'GTT Debt/Equity 0 = zéro endettement. Altarea 2.8x = très endetté (foncière). La dette n\'est pas mauvaise si le ROIC > coût de la dette.'},
+ {term:'Track Record Direction',cat:'s',short:'Analyse rétrospective des guidances données et tenues (ou non) par le management.',
+  formula:'% guidances tenues = (Tenues + 0.5×Partielles) / Total',
+  interp:'<span class="lex-good">> 75% : Management crédible</span> · <span class="lex-warn">50-75% : Prudence</span> · <span class="lex-bad">< 50% : Sur-promesse récurrente</span>',
+  ex:'Air Liquide 100% = management qui fait ce qu\'il dit. LVMH 50% sur la Chine 2023 = facteur externe. Renault 33% = historique de déception sur le BEV et la croissance.'},
+ {term:'Zone d\'Achat (Support Technique)',cat:'t',short:'Plage de prix représentant le meilleur rapport risque/rendement basé sur les niveaux techniques et fondamentaux.',
+  formula:'Borne basse = support technique ou DCF bear case · Borne haute = résistance proche',
+  interp:'Dans la zone = bon point d\'entrée. Au-dessus = attendre correction. Combinaison fondamentaux + technique est idéale.',
+  ex:'L\'Oréal zone 315-348€ : sous 315€ = excellent (approche DCF bear 280€ + support tech), au-dessus 395€ = attendre la prochaine correction.'},
+];
+let lexCat='all';
+function buildLex(){
+  const g=document.getElementById('lex-grid');
+  let data=LEX;
+  if(lexCat!=='all')data=data.filter(l=>l.cat===lexCat);
+  const q=document.querySelector('.lex-search')?.value||'';
+  if(q)data=data.filter(l=>l.term.toLowerCase().includes(q.toLowerCase())||l.short.toLowerCase().includes(q.toLowerCase()));
+  g.innerHTML=data.map((l,i)=>`<div class="lcard2" onclick="this.classList.toggle('open')">
+    <div class="lterm">${l.term}</div>
+    <span class="lctag c${l.cat}">${{v:'Valorisation',r:'Rentabilité',k:'Risque',t:'Technique',s:'Stratégie'}[l.cat]}</span>
+    <div class="ldef">${l.short}</div>
+    <div class="ldetail">
+      <div class="lform">Formule : ${l.formula}</div>
+      <div class="linterp">${l.interp}</div>
+      ${l.ex?`<div class="ldef" style="margin-top:5px;color:var(--tx2)">💡 ${l.ex}</div>`:''}
+    </div>
+  </div>`).join('');
+}
+function filterLex(q){buildLex();}
+function filterLexCat(c,btn){
+  document.querySelectorAll('.lcat').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  lexCat=c;buildLex();
+}
+
+
+
+// ═══════════ EXCEL ═══════════
+function xls(){
+  try{
+    if(typeof XLSX==='undefined'){alert('Bibliothèque XLSX non chargée. Ouvre le fichier HTML sur ton PC.');return;}
+    const wb=XLSX.utils.book_new();
+    const h=['Ticker','Société','Secteur','Cap','Indice','SRD','Note','Rec.','Cours','Zone Entrée','Stop','Obj.1','R/R','DCF Bear','DCF Base','DCF Bull','Upside%','P/E','P/B','EV/EBITDA','P/S','ROE%','ROIC%','ROA%','Dett/EBITDA','Int.Cov.','Div%','Marge%','Marge Brute%','FCF%','CAPEX/CA%','BPA%','Piotroski/9','Altman Z','RSI','MM50','MM200','Track%','Cible','Buy','Hold','Sell'];
+    const rows=S.map(s=>[s.ticker,s.name,s.sector,s.cap,s.idx,s.srd?'Oui':'Non',s.score,s.rec,s.price,s.el+'-'+s.eh+'€',s.stop,s.o1,rratio(s),s.dcfb,s.dcfm,s.dcfu,parseFloat(up(s)),s.pe,s.pb,s.ev_ebitda,s.ps,s.roe,s.roic,s.roa,s.debt,s.ic===999?'∞':s.ic,s.yield,s.margin,s.gm,s.fcf,s.capr,s.epsg,s.pio,s.alt||'N/A',s.rsi,s.mm50,s.mm200,trOk(s.track),s.tp,s.cb,s.ch,s.cs]);
+    XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([h,...rows]),'Synthèse Complète');
+    const pep=S.filter(s=>s.score==='A');
+    XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([h,...pep.map(s=>[s.ticker,s.name,s.sector,s.cap,s.idx,s.srd?'Oui':'Non',s.score,s.rec,s.price,s.el+'-'+s.eh+'€',s.stop,s.o1,rratio(s),s.dcfb,s.dcfm,s.dcfu,parseFloat(up(s)),s.pe,s.pb,s.ev_ebitda,s.ps,s.roe,s.roic,s.roa,s.debt,s.ic===999?'∞':s.ic,s.yield,s.margin,s.gm,s.fcf,s.capr,s.epsg,s.pio,s.alt||'N/A',s.rsi,s.mm50,s.mm200,trOk(s.track),s.tp,s.cb,s.ch,s.cs])]),'⭐ Pépites Grade A');
+    const rnd=S.filter(s=>s.yield>=4).sort((a,b)=>b.yield-a.yield);
+    XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([['Ticker','Société','Note','Cours','Div%','FCF%','Couverture','Stop','Obj.1'],...rnd.map(s=>[s.ticker,s.name,s.score,s.price,s.yield,s.fcf,(s.fcf/s.yield).toFixed(1)+'x',s.stop,s.o1])]),'💰 Top Rendements');
+    const byP=[...S].sort((a,b)=>b.pio-a.pio);
+    XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([['Ticker','Société','Piotroski','Qualité','Altman','Zone','IntCov','FCF%','Track%','Note'],...byP.map(s=>[s.ticker,s.name,s.pio,piL(s.pio),s.alt||'N/A',s.alt?(s.alt>3?'Sûre':s.alt>1.8?'Grise':'Danger'):'N/A',s.ic===999?'∞':s.ic,s.fcf,trOk(s.track),s.score])]),'🛡️ Solidité');
+    const byU=[...S].sort((a,b)=>parseFloat(up(b))-parseFloat(up(a)));
+    XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([['Ticker','Société','Cours','Zone','Stop','Obj.1','R/R','Bear','Base','Bull','Upside%','Cible','Note'],...byU.map(s=>[s.ticker,s.name,s.price,s.el+'-'+s.eh+'€',s.stop,s.o1,rratio(s),s.dcfb,s.dcfm,s.dcfu,parseFloat(up(s)),s.tp,s.score])]),'📈 DCF & Entrées');
+    const etfH=['Ticker','Nom','Émetteur','ISIN','Type','Frais%','Perf 1an%','Perf 5ans%','Encours','Note'];
+    XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([etfH,...ETF.map(e=>[e.ticker,e.name,e.emetteur,e.isin,e.type,e.frais,e.perf1y,e.perf5y,e.encours,e.note])]),'🌍 ETF PEA');
+    XLSX.writeFile(wb,`PEA_Screener_Pro_v4_${new Date().toISOString().split('T')[0]}.xlsx`);
+  }catch(err){alert('Export Excel : ouvre le fichier HTML local (pas dans Claude). Erreur : '+err.message);}
+}
+
+// ═══════════ LIVE DATA ═══════════
+async function fetchLive(){
+  document.getElementById('live-st').textContent='Actualisation...';
+  const map={'MC':'MC.PA','AI':'AI.PA','OR':'OR.PA','SAF':'SAF.PA','AIR':'AIR.PA','SAN':'SAN.PA','TTE':'TTE.PA','GTT':'GTT.PA','COFA':'COFA.PA','MERY':'MRY.PA','RNO':'RNO.PA','JXS':'JXS.PA'};
+  let ok=0;
+  for(const[t,yf] of Object.entries(map)){
+    try{
+      const r=await fetch('https://query1.finance.yahoo.com/v8/finance/chart/'+yf+'?interval=1d&range=1d');
+      if(!r.ok)continue;
+      const d=await r.json();
+      const meta=d?.chart?.result?.[0]?.meta;
+      if(meta?.regularMarketPrice){
+        const s=S.find(x=>x.ticker===t);
+        if(s){s.price=Math.round(meta.regularMarketPrice*100)/100;s.chg=+((meta.regularMarketPrice-meta.previousClose)/meta.previousClose*100).toFixed(2);ok++;}
+      }
+    }catch(e){}
+  }
+  document.getElementById('live-st').textContent=ok>0?'✅ '+ok+' cours mis à jour':'⚠️ Utilise le fichier HTML local pour cette fonction';
+  if(fil[idx])render(fil[idx]);buildT(S);
+}
+
+
+// ═══════════ ETF DATA ═══════════
+const ETF=[
+  {ticker:'CW8',name:'MSCI World',emetteur:'Amundi',isin:'LU1681043599',type:'Capitalisant',frais:0.12,perf1y:18.2,perf3y:11.4,perf5y:14.8,encours:'8.2Md€',indice:'MSCI World (1600 titres)',replication:'Synthétique',note:'A',
+   avantages:['0.12% frais — le moins cher PEA','Synthétique = éligible PEA','1600 entreprises mondiales'],
+   risques:['Risque contrepartie swap (limité 10%)','Exposition USD 70%'],
+   verdict:"⭐ LE meilleur ETF PEA. 0.12% imbattable. Si un seul ETF dans votre PEA : c'est celui-là."},
+  {ticker:'PAEEM',name:'MSCI Emerging Markets',emetteur:'Amundi',isin:'LU1681045370',type:'Capitalisant',frais:0.20,perf1y:8.4,perf3y:2.1,perf5y:4.8,encours:'2.8Md€',indice:'MSCI EM (Chine, Inde, Brésil...)',replication:'Synthétique',note:'B',
+   avantages:['Seul ETF émergents éligible PEA','Inde croissance structurelle'],
+   risques:['Chine 30% risque géopolitique','Volatilité élevée'],
+   verdict:'Complément du CW8 pour émergents. Limiter à 15% du portefeuille.'},
+  {ticker:'PANX',name:'NASDAQ 100',emetteur:'Amundi',isin:'LU1681038243',type:'Capitalisant',frais:0.23,perf1y:28.4,perf3y:10.1,perf5y:22.3,encours:'3.1Md€',indice:'NASDAQ 100 (100 tech US)',replication:'Synthétique',note:'B',
+   avantages:['Éligible PEA','Apple, MSFT, Nvidia, Meta...','Performance historique supérieure'],
+   risques:['0.23% relativement cher','Concentration 10 titres = 50%'],
+   verdict:'Satellite tech US en PEA. Ne pas dépasser 20% du portefeuille.'},
+  {ticker:'PCEU',name:'Europe ex-UK',emetteur:'Amundi',isin:'LU1681047378',type:'Capitalisant',frais:0.15,perf1y:6.8,perf3y:5.2,perf5y:8.4,encours:'1.2Md€',indice:'MSCI Europe ex-UK',replication:'Synthétique',note:'B',
+   avantages:['Complémente CW8 sur Europe','Valorisation attractive PE 13x vs 22x US'],
+   risques:['Croissance structurellement faible','Cycliques surpondérés'],
+   verdict:"Pour sur-pondérer l'Europe. Pari sur le rattrapage européen."},
+  {ticker:'GOLDN',name:'Or Physique',emetteur:'WisdomTree',isin:'DE000A0N62G0',type:'Capitalisant',frais:0.39,perf1y:22.4,perf3y:11.8,perf5y:12.4,encours:'4.2Md€',indice:'Gold Spot Price',replication:'Physique',note:'B',
+   avantages:['Couverture inflation & crises','Or physique réel','Décorrélation parfaite actions'],
+   risques:['⚠️ Non éligible PEA — compte-titres uniquement','0.39% de frais','Aucun dividende'],
+   verdict:'5-10% du portefeuille global en CTO. Assurance contre les crises. Pas dans le PEA.'},
+  {ticker:'ESE',name:'S&P 500 Core',emetteur:'iShares (BlackRock)',isin:'IE00B5BMR087',type:'Capitalisant',frais:0.07,perf1y:24.1,perf3y:13.2,perf5y:17.6,encours:'95Md€',indice:'S&P 500 (500 grandes US)',replication:'Physique',note:'A',
+   avantages:['0.07% ultra-compétitif','Réplication physique','Liquidité maximale'],
+   risques:['⚠️ Non éligible PEA direct','Concentration US 70%+'],
+   verdict:'Meilleur ETF S&P 500 mondial mais en CTO. En PEA utiliser CW8 (Amundi synthétique).'},
+  {ticker:'LYPS',name:'S&P 500 ESG',emetteur:'Lyxor (Amundi)',isin:'LU1792117779',type:'Capitalisant',frais:0.09,perf1y:22.8,perf3y:12.8,perf5y:16.4,encours:'2.1Md€',indice:'S&P 500 ESG filtré',replication:'Synthétique',note:'B',
+   avantages:['Éligible PEA','0.09% compétitif','Filtrage ESG','Quasi-même performance S&P 500'],
+   risques:['Exclut pétrole/tabac/armement','Concentration tech similaire'],
+   verdict:'Alternative au CW8 pour S&P 500 en PEA avec filtre ESG. Frais compétitifs.'},
+  {ticker:'RS2K',name:'Russell 2000 Small Caps',emetteur:'iShares',isin:'IE00B3YCGJ38',type:'Capitalisant',frais:0.20,perf1y:8.2,perf3y:2.4,perf5y:9.8,encours:'12Md€',indice:'Russell 2000 (2000 small caps US)',replication:'Physique',note:'C',
+   avantages:['Diversification hors mega-caps','Bénéficiaire baisse taux US'],
+   risques:['⚠️ Non éligible PEA','Très volatile (Beta 1.4)','Sous-performance 2021-2024'],
+   verdict:'Satellite optionnel CTO pour small caps US. Attendre confirmation baisse des taux.'},
+];
+
+// ═══════════ ETF AFFICHAGE ═══════════
+function buildETF(){
+  const g=document.getElementById('etf-grid');
+  if(!g)return;
+  const noteCl={A:'qA',B:'qB',C:'qC',D:'qD'};
+  const fCol=f=>f<0.15?'var(--gn)':f<0.25?'var(--gd)':'var(--or)';
+  const p1Col=p=>p>15?'var(--gn)':p>8?'var(--gd)':'var(--mu)';
+  g.innerHTML=ETF.map(e=>`
+    <div class="etf-card">
+      <div class="etf-top">
+        <div class="etf-tkr">${e.ticker}</div>
+        <div class="etf-mid">
+          <div class="etf-name">${e.name}</div>
+          <div style="font-size:9px;color:rgba(255,255,255,.4)">${e.emetteur} · ${e.indice}</div>
+          <div class="ftags" style="margin-top:4px">
+            <span class="tag t-pea">${e.type}</span>
+            <span class="tag t-sec">${e.replication}</span>
+            ${e.replication==='Synthétique'?'<span class="tag t-pea">✓ PEA</span>':'<span class="tag t-srd">CTO</span>'}
+          </div>
+        </div>
+        <div><div class="qg ${noteCl[e.note]||'qC'}" style="width:30px;height:30px;font-size:14px">${e.note}</div></div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:5px;padding:10px 14px;border-bottom:1px solid var(--bd)">
+        <div class="mb"><div class="ml">Frais/an</div><div class="mv" style="color:${fCol(e.frais)}">${e.frais}%</div></div>
+        <div class="mb"><div class="ml">Perf 1 an</div><div class="mv" style="color:${p1Col(e.perf1y)}">+${e.perf1y}%</div></div>
+        <div class="mb"><div class="ml">Perf 5 ans/an</div><div class="mv" style="color:var(--gn)">+${e.perf5y}%</div></div>
+        <div class="mb"><div class="ml">Encours</div><div class="mv" style="font-size:11px">${e.encours}</div></div>
+        <div class="mb"><div class="ml">ISIN</div><div class="mv" style="font-size:8px;letter-spacing:0">${e.isin}</div></div>
+        <div class="mb"><div class="ml">Réplication</div><div class="mv" style="font-size:10px">${e.replication}</div></div>
+      </div>
+      <div style="padding:10px 14px;border-bottom:1px solid var(--bd)">
+        ${e.avantages.map(a=>`<div style="font-size:10px;color:var(--tx2);padding:2px 0">✅ ${a}</div>`).join('')}
+        ${e.risques.map(r=>`<div style="font-size:10px;color:var(--or);padding:2px 0">⚠️ ${r}</div>`).join('')}
+      </div>
+      <div class="thesis" style="margin:0;border-radius:0;font-size:11px">${e.verdict}</div>
+    </div>`).join('');
+}
+
+// ═══════════ PDF FICHE ═══════════
+function pdfFiche(){
+  const s=fil[idx];if(!s)return;
+  const rr=rratio(s),u=up(s),tpct=trOk(s.track);
+  const w=window.open('','_blank','width=900,height=1200');
+  if(!w){alert('Autorise les popups pour ce site');return;}
+  const rows2=`<table style="width:100%;border-collapse:collapse;font-size:11px;margin:6px 0">
+    <thead><tr style="background:#0f2540;color:white">
+      <th style="padding:4px 6px;text-align:left;font-size:8px">Société</th>
+      <th style="padding:4px 6px;text-align:right;font-size:8px">P/E</th>
+      <th style="padding:4px 6px;text-align:right;font-size:8px">P/B</th>
+      <th style="padding:4px 6px;text-align:right;font-size:8px">ROE%</th>
+      <th style="padding:4px 6px;text-align:right;font-size:8px">Div%</th>
+      <th style="padding:4px 6px;text-align:right;font-size:8px">EV/EBITDA</th>
+    </tr></thead><tbody>
+    <tr style="background:#f5efe0"><td style="padding:4px 6px;font-weight:bold">★ ${s.ticker}</td>
+    <td style="padding:4px 6px;text-align:right">${s.pe}x</td><td style="padding:4px 6px;text-align:right">${s.pb}x</td>
+    <td style="padding:4px 6px;text-align:right">${s.roe}%</td><td style="padding:4px 6px;text-align:right">${s.yield}%</td>
+    <td style="padding:4px 6px;text-align:right">${s.ev_ebitda}x</td></tr>
+    ${s.peers.map(p=>`<tr><td style="padding:4px 6px">${p.n}</td><td style="padding:4px 6px;text-align:right">${p.pe}x</td><td style="padding:4px 6px;text-align:right">${p.pb}x</td><td style="padding:4px 6px;text-align:right">${p.roe}%</td><td style="padding:4px 6px;text-align:right">${p.div}%</td><td style="padding:4px 6px;text-align:right">${p.evebitda}x</td></tr>`).join('')}
+  </tbody></table>`;
+  const html=`<!DOCTYPE html><html><head><meta charset=UTF-8><title>${s.ticker} — ${s.name}</title>
+  <style>body{font-family:Georgia,serif;max-width:820px;margin:20px auto;color:#1a1a1a;font-size:13px;line-height:1.5}
+  h1{font-size:22px;color:#0f2540;border-bottom:3px solid #b8860b;padding-bottom:8px;margin-bottom:12px}
+  h2{font-size:13px;color:#1a3a5c;border-left:4px solid #b8860b;padding-left:8px;margin:14px 0 8px}
+  .grid{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin:8px 0}
+  .box{border:1px solid #ddd;padding:6px;text-align:center;border-radius:3px}
+  .lbl{font-size:9px;color:#888;text-transform:uppercase;letter-spacing:1px}
+  .val{font-size:14px;font-weight:bold;font-family:monospace}
+  .ep{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:8px 0}
+  .ep-b{border:2px solid;padding:8px;text-align:center;border-radius:4px}
+  .ep-e{border-color:#1a6b3a;background:#edf7f1}.ep-s{border-color:#c0392b;background:#fdf0ee}
+  .ep-o{border-color:#1a4a7a;background:#eef3fa}.ep-r{border-color:#b8860b;background:#f5efe0}
+  .thesis{background:#f5efe0;border-left:4px solid #b8860b;padding:10px 12px;font-style:italic;margin:8px 0;font-size:12px;line-height:1.7}
+  .contra{background:#fdf0ee;border-left:4px solid #c0392b;padding:10px 12px;margin:8px 0;font-size:12px;line-height:1.7}
+  .footer{margin-top:20px;font-size:9px;color:#aaa;border-top:1px solid #ddd;padding-top:6px}
+  @media print{body{margin:0}}</style></head><body>
+  <h1>${s.ticker} — ${s.name} <span style="font-size:13px;color:#888">${s.idx} · ${s.sector}</span></h1>
+  <p><b>Cours :</b> ${s.price}€ &nbsp; <b>Note :</b> ${s.score} &nbsp; <b>Rec. :</b> ${s.rec.toUpperCase()} &nbsp; <b>Cap. :</b> ${s.mkt}</p>
+  <h2>Points Entrée / Sortie</h2>
+  <div class=ep>
+    <div class="ep-b ep-e"><div class=lbl>Zone Achat</div><div class=val style="color:#1a6b3a">${s.el}–${s.eh}€</div><div style="font-size:10px">${s.price>=s.el&&s.price<=s.eh?'✅ Dans la zone':'Attendre'}</div></div>
+    <div class="ep-b ep-s"><div class=lbl>Stop Loss</div><div class=val style="color:#c0392b">${s.stop}€</div><div style="font-size:10px">Risque ${((s.price-s.stop)/s.price*100).toFixed(1)}%</div></div>
+    <div class="ep-b ep-o"><div class=lbl>Objectif 1</div><div class=val style="color:#1a4a7a">${s.o1}€</div><div style="font-size:10px">+${((s.o1-s.price)/s.price*100).toFixed(1)}%</div></div>
+    <div class="ep-b ep-r"><div class=lbl>R/R</div><div class=val style="color:#b8860b">${rr}x</div><div style="font-size:10px">${rr>=2?'Favorable':rr>=1?'Correct':'Faible'}</div></div>
+  </div>
+  <h2>Ratios Financiers</h2>
+  <div class=grid>
+    ${[['P/E',s.pe+'x'],['P/B',s.pb+'x'],['EV/EBITDA',s.ev_ebitda+'x'],['ROE',s.roe+'%'],['ROIC',s.roic+'%'],['ROA',s.roa+'%'],['FCF Yield',s.fcf+'%'],['Div.',s.yield+'%'],['Mg Nette',s.margin+'%'],['CAPEX/CA',s.capr+'%']].map(m=>`<div class=box><div class=lbl>${m[0]}</div><div class=val>${m[1]}</div></div>`).join('')}
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:8px 0">
+    <div class=box><div class=lbl>Piotroski</div><div class=val>${s.pio}/9</div></div>
+    <div class=box><div class=lbl>Altman Z</div><div class=val>${s.alt||'N/A'}</div></div>
+    <div class=box><div class=lbl>RSI 14j</div><div class=val>${s.rsi}</div></div>
+    <div class=box style="background:#f5efe0"><div class=lbl>Upside DCF</div><div class=val style="color:#b8860b">${u}%</div></div>
+  </div>
+  <h2>Peers</h2>${rows2}
+  <h2>Thèse Haussière</h2><div class=thesis>${s.thesis}</div>
+  <h2>Thèse Baissière (Contra)</h2><div class=contra>${s.contra}</div>
+  <h2>Track Record Direction — ${tpct}% fiabilité</h2>
+  ${s.track.map(t=>`<div style="display:flex;gap:10px;padding:4px 0;border-bottom:1px solid #eee">
+    <b style="width:40px;color:${t.ok==='ok'?'#1a6b3a':t.ok==='partial'?'#b8860b':'#c0392b'}">${t.y}</b>
+    <span style="flex:1">${t.p}</span>
+    <b style="color:${t.ok==='ok'?'#1a6b3a':t.ok==='partial'?'#b8860b':'#c0392b'}">${t.ok==='ok'?'✓ Tenu':t.ok==='partial'?'~ Partiel':'✗ Raté'}</b>
+  </div>`).join('')}
+  <div class=footer>⚠ Données éducatives — Pas de conseil en investissement · PEA Screener Pro · ${new Date().toLocaleDateString('fr-FR')} · ${s.ticker}</div>
+  <script>window.onload=function(){setTimeout(function(){window.print();},600);}<\/script>
+  </body></html>`;
+  w.document.write(html);
+  w.document.close();
+}
+
+
+// ═══════════ INIT ═══════════
+document.addEventListener('DOMContentLoaded',function(){
+  fil=[...S];buildQ();buildT(S);buildLex();buildETF();show(0);startR();
+});
+</script>
+</body>
+</html>
