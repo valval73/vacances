@@ -1,0 +1,26 @@
+name: PEA Screener — Prix 7h (Lun-Ven)
+
+on:
+  schedule:
+    - cron: '0 6 * * 1-5'
+  workflow_dispatch:
+
+jobs:
+  update-prices:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      - name: Mise à jour des prix
+        run: python update_prices.py
+      - name: Commit
+        run: |
+          git config user.name "PEA Bot"
+          git config user.email "bot@pea.fr"
+          git add index.html
+          git diff --staged --quiet || git commit -m "📈 Prix $(date '+%d/%m %H:%M')"
+          git push
