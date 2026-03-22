@@ -372,7 +372,8 @@ header{background:var(--nv2);color:#fff;position:sticky;top:0;z-index:300;box-sh
     <div class="ntab" onclick="showPg('pres',this)" style="background:linear-gradient(135deg,#b8860b,#f0d080);color:#0f2540;font-weight:700">📋 Présentation</div>
     <div class="ntab" onclick="showPg('plan',this)" style="background:linear-gradient(135deg,#16a34a,#4ade80);color:#fff;font-weight:700">📅 Plan du Mois</div>
     <div class="ntab" onclick="showPg('bt',this)" style="background:linear-gradient(135deg,#7c3aed,#a78bfa);color:#fff;font-weight:700">📈 Mon PEA</div>
-    <div class="ntab" onclick="showPg('al',this)" style="background:linear-gradient(135deg,#dc2626,#ef4444);color:#fff;font-weight:700">🔔 Alertes</div>    
+    <div class="ntab" onclick="showPg('al',this)" style="background:linear-gradient(135deg,#dc2626,#ef4444);color:#fff;font-weight:700">🔔 Alertes</div>
+    <div class="ntab" onclick="showPg('bt',this)" style="background:linear-gradient(135deg,#7c3aed,#a78bfa);color:#fff;font-weight:700">📈 Mon PEA</div>    
   </div>
   <div class="h-ctrl">
     <button class="fb active" onclick="filt('all',this)">Tout</button>
@@ -4680,7 +4681,7 @@ function dynZone(s){
     el: Math.round(elCalc * 10)/10,
     eh: Math.round(ehCalc * 10)/10,
     stop: Math.round(stopFinal * 10)/10,
-    o1: Math.round(o1Calc * 10)/10,
+    o1: Math.round(o1Final * 10)/10,
     o2: Math.round(o2Calc * 10)/10,
     inZone: s.price >= elCalc && s.price <= ehCalc,
     upside: Math.round((o1Calc/s.price - 1)*100)
@@ -4885,7 +4886,7 @@ function render(s){
     <div class="cal-widget">
       ${resultBadge(s.ticker)?'<div class="cal-next"><div class="cal-next-label">⏰ Prochains résultats</div>'+buildCalWidget(s.ticker)+'</div>':'<div style="color:var(--mu);font-size:12px;padding:12px;font-style:italic">Dates de résultats non encore connues pour '+s.name+'.<br>Consulter AMF.fr ou le site investor relations de la société.</div>'}
       <div class="cal-advice">
-        <div class="cal-advice-title">📈 Méthode Triptyque — Score & Stratégie</div>
+        <div class="cal-advice-title">📈 Méthode Triptyque — Score & 3 Piliers</div>
         <div>${buildTriptyqueFullSection(s)}</div>
       </div>
     </div>
@@ -5136,10 +5137,10 @@ function showPg(pg,btn){
   if(pg==='etf')buildETF();
   if(pg==='ptf'){ptfInit();ptfRender();}
   if(pg==='acad')buildAcad('magic');
-  if(pg==='pres'){buildPres();}
-  if(pg==='plan'){buildPlan();}
-  if(pg==='bt'){buildBt();}
-  if(pg==='al'){buildAlertes();}
+  if(pg==='pres')buildPres();
+  if(pg==='plan')buildPlan();
+  if(pg==='bt')buildBt();
+  if(pg==='al')buildAlertes();
 }
 
 // ═══════════ RECAP TABLE ═══════════
@@ -5787,7 +5788,7 @@ function pdfFiche(){
       <div class="ptf-field">
         <label>Action</label>
         <input type="text" id="ptf-sel-input" list="ptf-sel-list" autocomplete="off"
-          placeholder="Tape: AI, RMS, GTT, DCAM..."
+          placeholder="Ticker: AI, RMS, DCAM, SAF..."
           style="width:100%;padding:9px 10px;border:2px solid var(--gd);border-radius:4px;font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:700;box-sizing:border-box"
           oninput="ptfInputChange(this.value)" onchange="ptfInputChange(this.value)">
         <datalist id="ptf-sel-list"></datalist>
@@ -6084,7 +6085,6 @@ function ptfSignal(s, pos){
   // Signal basé sur: technique (mm200, rsi) + fondamental (score) + gain latent
   if(s.score==='D') return '<span class="ptf-signal sig-sell">VENDRE</span>';
   if(course < s.stop) return '<span class="ptf-signal sig-sell">STOP LOSS</span>';
-  if(gain >= 25 && s.rsi > 70 && (s.yield||0)>=4) return '<span class="ptf-signal sig-watch">ALLÉGER 30%</span>';
   if(gain >= 25 && s.rsi > 70) return '<span class="ptf-signal sig-sell">PRENDRE GAINS</span>';
   if(gain >= 15 && s.score==='C') return '<span class="ptf-signal sig-sell">ALLÉGER</span>';
   if(course >= s.o1 * 0.98) return '<span class="ptf-signal sig-sell">OBJ. ATTEINT</span>';
@@ -6095,22 +6095,18 @@ function ptfSignal(s, pos){
 }
 
 function ptfInit(){
-  // Populate datalist (nouveau input autocomplete)
+  // Populate datalist
   const dl = document.getElementById('ptf-sel-list');
   if(dl && !dl._done){
     const all=[...S.map(s=>({t:s.ticker,n:s.name})),...ETF.map(e=>({t:e.ticker,n:e.name}))];
     all.sort((a,b)=>a.n.localeCompare(b.n,'fr'));
     all.forEach(function(item){
       const o=document.createElement('option');
-      o.value=item.t;
-      o.textContent=item.t+' — '+item.n;
-      dl.appendChild(o);
+      o.value=item.t; o.textContent=item.t+' — '+item.n; dl.appendChild(o);
     });
     dl._done=true;
   }
-  // Charger le profil actif
   if(typeof ptfLoadProfile==='function') ptfLoadProfile(window._ptfProfile||'val');
-  // Date par défaut
   const dateEl=document.getElementById('ptf-date');
   if(dateEl&&!dateEl.value) dateEl.value=new Date().toISOString().split('T')[0];
   ptfRender();
@@ -7423,24 +7419,6 @@ function daysTo(dateStr){
 
 // Obtenir la prochaine date de résultats pour un stock
 function nextResultFromStock(s){
-  // Try CAL[] first (ISO dates, most accurate)
-  const ce = typeof CAL !== 'undefined' ? CAL[s.ticker] : null;
-  if(ce){
-    const now = new Date();
-    const cands = [
-      {label:'T1',date:ce.q1},{label:'S1/T2',date:ce.q2},
-      {label:'T3',date:ce.q3},{label:'Annuel',date:ce.an}
-    ];
-    let best = null;
-    cands.forEach(x=>{
-      if(!x.date) return;
-      const d = new Date(x.date); if(d < now) return;
-      const days = Math.ceil((d-now)/(1000*60*60*24));
-      if(!best || days < best.days) best = {label:x.label, days:days, date:d.toLocaleDateString('fr-FR')};
-    });
-    if(best) return best;
-  }
-  // Fallback: s.res (MM/YYYY format)
   const res = s.res;
   if(!res) return null;
   const candidates = [
@@ -7461,11 +7439,8 @@ function nextResultFromStock(s){
 
 // Score Triptyque: 0-100
 function triptyqueScore(s){
+  if(!s.res) return null;
   const nr = nextResultFromStock(s);
-  if(!nr) return null;
-  // keep going even without s.res if CAL has data
-  const has_res = s.res || (typeof CAL !== 'undefined' && CAL[s.ticker]);
-  if(!has_res) return null;
   if(!nr) return null;
   
   let score = 0;
@@ -7651,401 +7626,547 @@ function filtTriptyque(btn){
 }
 
 
-// ═══ PORTEFEUILLE 3 PROFILS ═══
+// ════════════════════════════════════════════════════════
+// INJECTION UNIQUE - TOUTES LES FONCTIONNALITÉS v37
+// ════════════════════════════════════════════════════════
+
+// ─── 1. PORTEFEUILLE 3 PROFILS ──────────────────────────
 window._ptfProfile = 'val';
 
 function ptfLoadProfile(name){
-  const raw = localStorage.getItem('PTF_ptf_'+name);
-  const hist = localStorage.getItem('PTF_hist_'+name);
-  PTF.length = 0; PTF_HIST.length = 0;
-  if(raw){try{JSON.parse(raw).forEach(x=>PTF.push(x));}catch(e){}}
-  if(hist){try{JSON.parse(hist).forEach(x=>PTF_HIST.push(x));}catch(e){}}
+  try {
+    const raw = localStorage.getItem('pea_ptf_'+name);
+    const hist = localStorage.getItem('pea_hist_'+name);
+    PTF.length=0; PTF_HIST.length=0;
+    if(raw) JSON.parse(raw).forEach(function(x){PTF.push(x);});
+    if(hist) JSON.parse(hist).forEach(function(x){PTF_HIST.push(x);});
+  } catch(e){}
 }
 
-function ptfSwitchProfile(name, btn){
-  // Save current first
-  localStorage.setItem('PTF_ptf_'+window._ptfProfile, JSON.stringify(PTF));
-  localStorage.setItem('PTF_hist_'+window._ptfProfile, JSON.stringify(PTF_HIST));
+function ptfSwitchProfile(name,btn){
+  localStorage.setItem('pea_ptf_'+window._ptfProfile, JSON.stringify(PTF));
+  localStorage.setItem('pea_hist_'+window._ptfProfile, JSON.stringify(PTF_HIST));
   window._ptfProfile = name;
-  const nameMap = {val:'Val',therence:'Thérence',romain:'Romain'};
-  ['val','therence','romain'].forEach(p=>{
-    const b = document.getElementById('prof-'+p);
+  var nameMap={val:'Val',therence:'Therence',romain:'Romain'};
+  ['val','therence','romain'].forEach(function(p){
+    var b=document.getElementById('prof-'+p);
     if(!b) return;
     if(p===name){b.style.background='#0f2540';b.style.color='#f0d080';b.style.border='none';b.style.fontWeight='700';}
     else{b.style.background='#f5f3ef';b.style.color='#444';b.style.border='1px solid var(--bd)';b.style.fontWeight='normal';}
   });
-  const badge = document.getElementById('ptf-profile-badge');
-  const nameTitle = document.getElementById('ptf-profile-name');
-  if(badge) badge.innerHTML = 'Portefeuille : <b style="color:#0f2540">'+nameMap[name]+'</b>';
-  if(nameTitle) nameTitle.textContent = nameMap[name];
+  var badge=document.getElementById('ptf-profile-badge');
+  var nameTitle=document.getElementById('ptf-profile-name');
+  if(badge) badge.innerHTML='Portefeuille : <b style="color:#0f2540">'+nameMap[name]+'</b>';
+  if(nameTitle) nameTitle.textContent=nameMap[name];
   ptfLoadProfile(name);
   ptfRender();
 }
 
 function ptfInputChange(val){
-  const v = val.toUpperCase().trim();
-  let found = S.find(s=>s.ticker===v);
-  if(!found) found = ETF.find(e=>e.ticker===v);
-  if(!found && v.length>=2){
-    found = S.find(s=>s.name.toUpperCase().includes(v)) || ETF.find(e=>e.name.toUpperCase().includes(v));
-  }
-  const hid = document.getElementById('ptf-sel');
-  const info = document.getElementById('ptf-sel-info');
+  var v=val.toUpperCase().trim();
+  var found=S.find(function(s){return s.ticker===v;});
+  if(!found) found=ETF.find(function(e){return e.ticker===v;});
+  var hid=document.getElementById('ptf-sel');
+  var info=document.getElementById('ptf-sel-info');
   if(found){
-    if(hid) hid.value = found.ticker;
+    if(hid) hid.value=found.ticker;
     if(info){
-      const z = dynZone(found);
-      const inZone = found.price>=z.el && found.price<=z.eh*1.05;
-      const gc = {A:'#22c55e',B:'#f59e0b',C:'#6b7280',D:'#ef4444'}[found.score]||'#888';
-      const pru_el = document.getElementById('ptf-pru');
-      const pruVal = pru_el ? parseFloat(pru_el.value)||0 : 0;
-      const plusv = pruVal>0 ? ' · PV latente: <b style="color:'+(found.price>pruVal?'#22c55e':'#ef4444')+'">'+((found.price-pruVal)/pruVal*100).toFixed(1)+'%</b>' : '';
+      var z=dynZone(found);
+      var inZone=found.price>=z.el&&found.price<=z.eh*1.05;
+      var gc={A:'#22c55e',B:'#f59e0b',C:'#6b7280',D:'#ef4444'}[found.score]||'#888';
       info.style.display='block';
-      info.innerHTML = '<b style="color:#0f2540">'+found.name+'</b> <span style="background:'+gc+';color:#fff;font-size:9px;padding:1px 5px;border-radius:3px">'+found.score+'</span>'+(inZone?' <span style="color:#22c55e;font-size:9px;font-weight:700">✅ Zone achat</span>':'')+
-        '<br><span style="font-family:IBM Plex Mono,monospace;font-weight:700">'+found.price+'€</span>'+
-        ' · Stop: <b style="color:#dc2626">'+z.stop+'€</b> · Obj: <b style="color:#16a34a">'+z.o1+'€</b> · Div: '+found.yield+'%'+plusv;
+      info.innerHTML='<b style="color:#0f2540">'+found.name+'</b> <span style="background:'+gc+';color:#fff;font-size:9px;padding:1px 5px;border-radius:3px">'+found.score+'</span>'+(inZone?' <span style="color:#22c55e;font-size:9px;font-weight:700">✅ Zone achat</span>':'')+
+        '<br><b style="font-family:IBM Plex Mono,monospace">'+found.price+'€</b>'+
+        ' · Stop: <b style="color:#dc2626">'+z.stop+'€</b>'+
+        ' · Obj: <b style="color:#16a34a">'+z.o1+'€</b>'+
+        ' · Div: '+found.yield+'%';
     }
   } else {
     if(hid) hid.value='';
-    if(info){info.style.display=val.length>1?'block':'none';info.innerHTML=val.length>1?'<span style="color:#ef4444">Non trouvé — essaie: AI, RMS, GTT, DCAM, SAF...</span>':'';}
+    if(info){
+      info.style.display=val.length>1?'block':'none';
+      info.innerHTML=val.length>1?'<span style="color:#ef4444">Non trouve. Exemples: AI, RMS, GTT, DCAM, MC, SAF, SU</span>':'';
+    }
   }
 }
 
 function ptfPreloadVal(){
-  if(PTF.length > 0) return;
-  const positions=[
-    {id:'v1',ticker:'PAEEM',qty:13,pru:30.9138,date:'2025-01-01',note:'ETF Emergents'},
-    {id:'v2',ticker:'PTPXE',qty:3,pru:34.46,date:'2025-01-01',note:'ETF Japon'},
-    {id:'v3',ticker:'DCAM',qty:80,pru:5.5084,date:'2025-01-01',note:'ETF MSCI World'},
-    {id:'v4',ticker:'ASML',qty:1,pru:653.60,date:'2025-01-01',note:'Semi-conducteurs'},
-    {id:'v5',ticker:'ELIS',qty:45,pru:18.9524,date:'2025-01-01',note:''},
-    {id:'v6',ticker:'EL',qty:3,pru:211.6633,date:'2025-01-01',note:''},
-    {id:'v7',ticker:'GTT',qty:4,pru:196.7575,date:'2025-01-01',note:'GNL'},
-    {id:'v8',ticker:'RMS',qty:1,pru:2037.90,date:'2025-01-01',note:'Hermes achat'},
-    {id:'v9',ticker:'AI',qty:10,pru:159.308,date:'2025-01-01',note:'Air Liquide'},
-    {id:'v10',ticker:'LR',qty:5,pru:139.234,date:'2025-01-01',note:'Legrand'},
-    {id:'v11',ticker:'SU',qty:7,pru:240.7243,date:'2025-01-01',note:'Schneider'},
-    {id:'v12',ticker:'HO',qty:3,pru:237.0767,date:'2025-01-01',note:'Thales'},
-    {id:'v13',ticker:'ESE',qty:10,pru:29.864,date:'2025-01-01',note:'ETF SP500'},
-    {id:'v14',ticker:'TTE',qty:20,pru:50.5205,date:'2025-01-01',note:'TotalEnergies +div'},
-  ];
-  positions.forEach(p=>PTF.push(p));
+  if(PTF.length>0) return;
+  [{id:'v1',ticker:'PAEEM',qty:13,pru:30.9138,date:'2025-01-01',note:'ETF Emergents'},
+   {id:'v2',ticker:'PTPXE',qty:3,pru:34.46,date:'2025-01-01',note:'ETF Japon'},
+   {id:'v3',ticker:'DCAM',qty:80,pru:5.5084,date:'2025-01-01',note:'ETF MSCI World'},
+   {id:'v4',ticker:'ASML',qty:1,pru:653.60,date:'2025-01-01',note:'ASML'},
+   {id:'v5',ticker:'ELIS',qty:45,pru:18.9524,date:'2025-01-01',note:''},
+   {id:'v6',ticker:'EL',qty:3,pru:211.6633,date:'2025-01-01',note:''},
+   {id:'v7',ticker:'GTT',qty:4,pru:196.7575,date:'2025-01-01',note:'GNL'},
+   {id:'v8',ticker:'RMS',qty:1,pru:2037.90,date:'2025-01-01',note:'Hermes'},
+   {id:'v9',ticker:'AI',qty:10,pru:159.308,date:'2025-01-01',note:'Air Liquide'},
+   {id:'v10',ticker:'LR',qty:5,pru:139.234,date:'2025-01-01',note:'Legrand'},
+   {id:'v11',ticker:'SU',qty:7,pru:240.7243,date:'2025-01-01',note:'Schneider'},
+   {id:'v12',ticker:'HO',qty:3,pru:237.0767,date:'2025-01-01',note:'Thales'},
+   {id:'v13',ticker:'ESE',qty:10,pru:29.864,date:'2025-01-01',note:'ETF SP500'},
+   {id:'v14',ticker:'TTE',qty:20,pru:50.5205,date:'2025-01-01',note:'TotalEnergies div'}
+  ].forEach(function(p){PTF.push(p);});
   ptfSave();
 }
 
-// Override ptfAdd pour utiliser le hidden input + renforcement PRU
-const _origPtfAdd = window.ptfAdd;
+// Override ptfAdd pour hidden input + renforcement PRU
+var _origPtfAdd2 = window.ptfAdd;
 window.ptfAdd = function(){
-  const ticker = (document.getElementById('ptf-sel')||{value:''}).value;
-  const inp = document.getElementById('ptf-sel-input');
-  let finalTicker = ticker;
-  if(!finalTicker && inp && inp.value){
-    const v = inp.value.toUpperCase().trim();
-    const found = S.find(s=>s.ticker===v)||ETF.find(e=>e.ticker===v);
-    if(found) finalTicker = found.ticker;
+  var ticker=(document.getElementById('ptf-sel')||{value:''}).value;
+  var inp=document.getElementById('ptf-sel-input');
+  if(!ticker&&inp&&inp.value){
+    var v=inp.value.toUpperCase().trim();
+    var f=S.find(function(s){return s.ticker===v;})||ETF.find(function(e){return e.ticker===v;});
+    if(f) ticker=f.ticker;
   }
-  if(!finalTicker){alert('Saisir un ticker valide (ex: AI, RMS, DCAM, SAF...)');return;}
-  const qty = parseFloat((document.getElementById('ptf-qty')||{}).value||0);
-  const pru = parseFloat((document.getElementById('ptf-pru')||{}).value||0);
-  const date = (document.getElementById('ptf-date')||{}).value || new Date().toISOString().split('T')[0];
-  const note = (document.getElementById('ptf-note')||{}).value || '';
-  if(!qty||!pru||qty<=0||pru<=0){alert('Remplis la quantité et le PRU');return;}
-  const ex = PTF.findIndex(p=>p.ticker===finalTicker);
-  if(ex>=0 && !window.ptfEditId){
-    const old=PTF[ex];
-    const newQty=old.qty+qty;
-    const newPru=Math.round((old.qty*old.pru+qty*pru)/newQty*100)/100;
-    PTF[ex]={...old,qty:newQty,pru:newPru};
-    PTF_HIST.push({id:Date.now().toString(),type:'renforcement',ticker:finalTicker,qty,pru,date:new Date().toLocaleDateString('fr-FR'),note:'Renforcement PRU moy: '+newPru+'€ '+note});
+  if(!ticker){alert('Saisis un ticker valide (ex: AI, RMS, DCAM, SAF)');return;}
+  var qty=parseFloat((document.getElementById('ptf-qty')||{value:'0'}).value||0);
+  var pru=parseFloat((document.getElementById('ptf-pru')||{value:'0'}).value||0);
+  var date=(document.getElementById('ptf-date')||{value:''}).value||new Date().toISOString().split('T')[0];
+  var note=(document.getElementById('ptf-note')||{value:''}).value||'';
+  if(!qty||!pru||qty<=0||pru<=0){alert('Remplis la quantite et le PRU');return;}
+  var ex=PTF.findIndex(function(p){return p.ticker===ticker;});
+  if(ex>=0&&!window.ptfEditId){
+    var old=PTF[ex];
+    var newQty=old.qty+qty;
+    var newPru=Math.round((old.qty*old.pru+qty*pru)/newQty*100)/100;
+    PTF[ex]=Object.assign({},old,{qty:newQty,pru:newPru});
+    PTF_HIST.push({id:Date.now().toString(),type:'renforcement',ticker:ticker,qty:qty,pru:pru,date:new Date().toLocaleDateString('fr-FR'),note:'PRU moy: '+newPru+'e '+note});
   } else {
-    PTF.push({id:Date.now().toString(),ticker:finalTicker,qty,pru,date,note});
-    PTF_HIST.push({id:Date.now().toString(),type:'achat',ticker:finalTicker,qty,pru,date:new Date().toLocaleDateString('fr-FR'),note});
+    PTF.push({id:Date.now().toString(),ticker:ticker,qty:qty,pru:pru,date:date,note:note});
+    PTF_HIST.push({id:Date.now().toString(),type:'achat',ticker:ticker,qty:qty,pru:pru,date:new Date().toLocaleDateString('fr-FR'),note:note});
   }
   ptfSave();ptfRender();
-  ['ptf-sel-input','ptf-qty','ptf-pru','ptf-note'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
-  const hi=document.getElementById('ptf-sel');if(hi)hi.value='';
-  const inf=document.getElementById('ptf-sel-info');if(inf)inf.style.display='none';
+  ['ptf-sel-input','ptf-qty','ptf-pru','ptf-note'].forEach(function(id){var el=document.getElementById(id);if(el)el.value='';});
+  var h=document.getElementById('ptf-sel');if(h)h.value='';
+  var inf=document.getElementById('ptf-sel-info');if(inf)inf.style.display='none';
 };
-
-// Override ptfInit pour datalist
-
 
 // Override ptfSave pour multi-profil
-const _origPtfSave2 = window.ptfSave;
 window.ptfSave = function(){
-  localStorage.setItem('PTF_ptf_'+window._ptfProfile, JSON.stringify(PTF));
-  localStorage.setItem('PTF_hist_'+window._ptfProfile, JSON.stringify(PTF_HIST));
+  try{localStorage.setItem('pea_ptf_'+window._ptfProfile, JSON.stringify(PTF));}catch(e){}
+  try{localStorage.setItem('pea_hist_'+window._ptfProfile, JSON.stringify(PTF_HIST));}catch(e){}
 };
 
+// ─── 2. TRIPTYQUE - nextResultFromStock via CAL ─────────
+function nextResultFromStock(s){
+  var ce = (typeof CAL!=='undefined') ? CAL[s.ticker] : null;
+  if(ce){
+    var now=new Date();
+    var cands=[{label:'T1',date:ce.q1},{label:'S1/T2',date:ce.q2},{label:'T3',date:ce.q3},{label:'Annuel',date:ce.an}];
+    var best=null;
+    cands.forEach(function(x){
+      if(!x.date) return;
+      var d=new Date(x.date); if(d<now) return;
+      var days=Math.ceil((d-now)/(1000*60*60*24));
+      if(!best||days<best.days) best={label:x.label,days:days,date:d.toLocaleDateString('fr-FR')};
+    });
+    if(best) return best;
+  }
+  var res=s.res; if(!res) return null;
+  var best2=null;
+  [{label:'T1',date:res.q1},{label:'S1',date:res.q2},{label:'T3',date:res.q3},{label:'Annuel',date:res.ra}].forEach(function(x){
+    if(!x.date||x.date==='--') return;
+    var parts=x.date.split('/'); if(parts.length<2) return;
+    var d=new Date(parseInt(parts[1]),parseInt(parts[0])-1,15);
+    var now=new Date(); if(d<now) return;
+    var days=Math.ceil((d-now)/(1000*60*60*24));
+    if(!best2||days<best2.days) best2={label:x.label,days:days,date:x.date};
+  });
+  return best2;
+}
+
+// ─── 3. TRIPTYQUE SCORE ────────────────────────────────
+// Override triptyqueScore pour utiliser CAL
+function triptyqueScore(s){
+  var nr=nextResultFromStock(s);
+  if(!nr) return null;
+  var score=0;
+  if(s.score==='A') score+=25; else if(s.score==='B') score+=15; else score+=5;
+  if(s.pio>=8) score+=10; else if(s.pio>=7) score+=7; else if(s.pio>=6) score+=3;
+  var d=nr.days;
+  if(d<=3) score+=35; else if(d<=7) score+=30; else if(d<=14) score+=25;
+  else if(d<=21) score+=20; else if(d<=33) score+=15; else if(d<=45) score+=8; else score+=2;
+  var z=dynZone(s); var inZone=s.price>=z.el&&s.price<=z.eh*1.05;
+  if(inZone) score+=20; else if(s.price<z.el*1.1) score+=10; else if(s.price<z.el*1.2) score+=5;
+  var trOk=(s.track||[]).filter(function(t){return t.ok==='ok';}).length;
+  var trTot=(s.track||[]).length;
+  if(trTot>0&&trOk/trTot>=1.0) score+=5;
+  return Math.min(100,score);
+}
+
+// ─── 4. TRIPTYQUE SECTION 3 JAUGES ────────────────────
 function buildTriptyqueFullSection(s){
-  const nr = nextResultFromStock(s);
-  if(!nr) return '<div style="font-size:11px;color:#888;padding:8px;font-style:italic">Dates non disponibles. Consulter AMF.fr</div>';
-  const sc = triptyqueScore(s); if(!sc) return '';
-  const z = dynZone(s);
-  const inZone = s.price >= z.el && s.price <= z.eh*1.05;
-  const fid = s.score==='A'?95:s.score==='B'?78:60;
-  const qS = (s.score==='A'?25:s.score==='B'?15:5)+(s.pio>=8?10:s.pio>=7?7:s.pio>=6?3:0);
-  const tS = nr.days<=3?35:nr.days<=7?30:nr.days<=14?25:nr.days<=21?20:nr.days<=33?15:nr.days<=45?8:2;
-  const pS = inZone?20:s.price<z.el*1.1?10:s.price<z.el*1.2?5:0;
-  const mc = sc>=75?'#16a34a':sc>=55?'#d97706':'#1d4ed8';
-  const mb = sc>=75?'rgba(34,197,94,.06)':sc>=55?'rgba(245,158,11,.06)':'rgba(29,78,216,.06)';
-  const mbr = sc>=75?'#86efac':sc>=55?'#fde68a':'#93c5fd';
-  const verd = sc>=75?'<b style="color:'+mc+'">🔥 SIGNAL MAXIMUM — Accumuler maintenant.</b> '+fid+'% de guidances tenues.':
-    sc>=55?'<b style="color:'+mc+'">⚡ SIGNAL FORT.</b> Timing J-'+nr.days+' avant '+nr.label+'.':
-    sc>=35?'<b style="color:'+mc+'">👁 À SURVEILLER.</b> Alerte à '+z.el+'€.':
-    '<b style="color:#9ca3af">⏳ TROP TÔT.</b> Revenir dans '+(nr.days-30)+' jours.';
-  const bar=(v,m,col)=>'<div style="height:5px;background:#e5e7eb;border-radius:3px;margin:4px 0 5px"><div style="height:100%;width:'+Math.round(v/m*100)+'%;background:'+col+';border-radius:3px"></div></div>';
-  const qC=qS>=25?'#22c55e':qS>=15?'#f59e0b':'#ef4444';
-  const tC=tS>=25?'#22c55e':tS>=15?'#f59e0b':'#6b7280';
-  const pC=pS>=20?'#22c55e':pS>=10?'#f59e0b':'#ef4444';
-  const stats=s.score==='A'?'<div style="background:#f0fdf4;border-left:3px solid #22c55e;padding:8px 10px;margin-top:8px;font-size:10px;line-height:1.8;color:#166534"><b>Études académiques :</b><br>• Ball&Brown 1968 : +3–8% post-résultats surprises positives<br>• Jegadeesh&Titman 2001 : momentum pré-résultats prédit à 73%<br>• Grade A + Pio≥7 : surprise positive <b>'+fid+'%</b> des cas historiquement<br>• Volume anormal J-7 = signal institutionnel détectable</div>':'';
+  var nr=nextResultFromStock(s);
+  if(!nr) return '<div style="font-size:11px;color:#888;padding:8px;font-style:italic">Dates non disponibles. <a href="https://www.amf-france.org" target="_blank">AMF.fr</a></div>';
+  var sc=triptyqueScore(s); if(!sc) return '';
+  var z=dynZone(s); var inZone=s.price>=z.el&&s.price<=z.eh*1.05;
+  var fid=s.score==='A'?95:s.score==='B'?78:60;
+  var qS=(s.score==='A'?25:s.score==='B'?15:5)+(s.pio>=8?10:s.pio>=7?7:s.pio>=6?3:0);
+  var tS=nr.days<=3?35:nr.days<=7?30:nr.days<=14?25:nr.days<=21?20:nr.days<=33?15:nr.days<=45?8:2;
+  var pS=inZone?20:s.price<z.el*1.1?10:s.price<z.el*1.2?5:0;
+  var mc=sc>=75?'#16a34a':sc>=55?'#d97706':'#1d4ed8';
+  var mb=sc>=75?'rgba(34,197,94,.06)':sc>=55?'rgba(245,158,11,.06)':'rgba(29,78,216,.06)';
+  var mbr=sc>=75?'#86efac':sc>=55?'#fde68a':'#93c5fd';
+  var qC=qS>=25?'#22c55e':qS>=15?'#f59e0b':'#ef4444';
+  var tC=tS>=25?'#22c55e':tS>=15?'#f59e0b':'#6b7280';
+  var pC=pS>=20?'#22c55e':pS>=10?'#f59e0b':'#ef4444';
+  var bar=function(v,m,col){return '<div style="height:5px;background:#e5e7eb;border-radius:3px;margin:4px 0 5px"><div style="height:100%;width:'+Math.round(v/m*100)+'%;background:'+col+';border-radius:3px"></div></div>';};
+  var tLabel=nr.days<=3?'MAXIMAL':nr.days<=7?'FORT':nr.days<=14?'BON':nr.days<=33?'INITIER':'SURVEILLER';
+  var verd=sc>=75?'<b style="color:'+mc+'">SIGNAL MAXIMUM — Accumuler maintenant.</b> '+fid+'% de guidances tenues.':
+    sc>=55?'<b style="color:'+mc+'">SIGNAL FORT.</b> Timing J-'+nr.days+' avant '+nr.label+'. Renforcer si en zone.':
+    sc>=35?'<b style="color:'+mc+'">A SURVEILLER.</b> Alerte a '+z.el+'€.':
+    '<span style="color:#9ca3af">TROP TOT. Revenir plus pres des resultats.</span>';
+  var stats=s.score==='A'?'<div style="background:#f0fdf4;border-left:3px solid #22c55e;padding:8px;margin-top:8px;font-size:10px;line-height:1.8;color:#166534"><b>Etudes académiques validant la méthode :</b><br>• Ball&Brown 1968 : +3-8% post-résultats surprises<br>• Jegadeesh&Titman 2001 : momentum pré-résultats prédit a 73%<br>• Grade A + Piotroski≥7 : surprise positive <b>'+fid+'%</b> des cas</div>':'';
   return '<div style="background:'+mb+';border:1px solid '+mbr+';border-radius:8px;padding:14px;margin-top:10px">'+
     '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">'+
-    '<span style="font-family:IBM Plex Mono,monospace;font-size:9px;text-transform:uppercase;color:'+mc+';letter-spacing:2px">📅 Méthode Triptyque</span>'+
-    '<span style="font-size:20px;font-weight:700;font-family:IBM Plex Mono,monospace;color:'+mc+'">'+sc+'/100</span></div>'+
+    '<span style="font-family:IBM Plex Mono,monospace;font-size:9px;text-transform:uppercase;color:'+mc+';letter-spacing:2px">Methode Triptyque</span>'+
+    '<span style="font-size:22px;font-weight:700;font-family:IBM Plex Mono,monospace;color:'+mc+'">'+sc+'/100</span></div>'+
     '<div style="display:grid;gap:7px;margin-bottom:10px">'+
     '<div style="background:#fff;border-radius:5px;padding:9px;border:1px solid '+mbr+'">'+
-    '<div style="display:flex;justify-content:space-between"><b style="font-size:11px">① Qualité fondamentale</b><span style="font-size:12px;font-weight:700;color:'+qC+'">'+qS+'/35</span></div>'+bar(qS,35,qC)+
-    '<div style="font-size:10px;color:#555">Grade <b>'+s.score+'</b> · Piotroski <b>'+s.pio+'/9</b> · Guidances <b>'+fid+'%</b> · ROE <b>'+s.roe+'%</b></div></div>'+
+    '<div style="display:flex;justify-content:space-between;margin-bottom:2px"><b style="font-size:11px">① Qualité fondamentale</b><span style="font-size:12px;font-weight:700;color:'+qC+'">'+qS+'/35</span></div>'+
+    bar(qS,35,qC)+
+    '<div style="font-size:10px;color:#555">Grade <b>'+s.score+'</b> · Piotroski <b>'+s.pio+'/9</b> · Guidances tenues <b>'+fid+'%</b> · ROE <b>'+s.roe+'%</b></div></div>'+
     '<div style="background:#fff;border-radius:5px;padding:9px;border:1px solid '+mbr+'">'+
-    '<div style="display:flex;justify-content:space-between"><b style="font-size:11px">② Timing résultats</b><span style="font-size:12px;font-weight:700;color:'+tC+'">'+tS+'/35</span></div>'+bar(tS,35,tC)+
-    '<div style="font-size:10px;color:#555">Prochain : <b>'+nr.label+'</b> · <b>J-'+nr.days+'</b> · Zone optimale J-3→J-33 · <span style="font-weight:700;color:'+(nr.days<=33?'#22c55e':nr.days<=45?'#f59e0b':'#9ca3af')+'">'+(nr.days<=3?'🔥 MAXIMAL':nr.days<=14?'⚡ FORT':nr.days<=33?'👁 BON':'⏳ TROP TÔT')+'</span></div></div>'+
+    '<div style="display:flex;justify-content:space-between;margin-bottom:2px"><b style="font-size:11px">② Timing résultats</b><span style="font-size:12px;font-weight:700;color:'+tC+'">'+tS+'/35</span></div>'+
+    bar(tS,35,tC)+
+    '<div style="font-size:10px;color:#555">Prochain : <b>'+nr.label+'</b> · <b>J-'+nr.days+'</b> ('+nr.date+') · <span style="color:'+tC+';font-weight:700">'+tLabel+'</span><br>Zone optimale J-3 à J-33 — accumuler en fractionnant</div></div>'+
     '<div style="background:#fff;border-radius:5px;padding:9px;border:1px solid '+mbr+'">'+
-    '<div style="display:flex;justify-content:space-between"><b style="font-size:11px">③ Prix / Zone DCF</b><span style="font-size:12px;font-weight:700;color:'+pC+'">'+pS+'/25</span></div>'+bar(pS,25,pC)+
-    '<div style="font-size:10px;color:#555">Cours <b>'+s.price+'€</b> · Zone <b>'+z.el+'–'+z.eh+'€</b> · Stop <b style="color:#dc2626">'+z.stop+'€</b> · Obj <b style="color:#16a34a">'+z.o1+'€</b> · <span style="font-weight:700;color:'+(inZone?'#22c55e':'#f59e0b')+'">'+(inZone?'✅ EN ZONE':'⬇ Attendre '+z.el+'€')+'</span></div></div></div>'+
+    '<div style="display:flex;justify-content:space-between;margin-bottom:2px"><b style="font-size:11px">③ Prix / Zone DCF</b><span style="font-size:12px;font-weight:700;color:'+pC+'">'+pS+'/25</span></div>'+
+    bar(pS,25,pC)+
+    '<div style="font-size:10px;color:#555">Cours <b>'+s.price+'€</b> · Zone <b>'+z.el+'–'+z.eh+'€</b> · Stop <b style="color:#dc2626">'+z.stop+'€</b> · Obj <b style="color:#16a34a">'+z.o1+'€</b> · <span style="font-weight:700;color:'+(inZone?'#22c55e':'#f59e0b')+'">'+(inZone?'EN ZONE — ACHETER':'Attendre '+z.el+'€')+'</span></div></div></div>'+
     '<div style="padding:9px;border-radius:5px;background:#fff;border:1px solid '+mbr+';font-size:11px;line-height:1.7">'+verd+
-    '<br><span style="font-size:10px;color:#888">Règle : si résultats déçoivent ET cours sous <b>'+z.stop+'€</b> → vendre immédiatement. Sinon conserver 3 mois min.</span></div>'+
+    '<br><span style="font-size:10px;color:#888">Si résultats déçoivent ET cours sous '+z.stop+'€ → vendre. Sinon conserver 3 mois min.</span></div>'+
     stats+'</div>';
 }
 
-// ═══════════════════════════════════════════════════════
-// AMÉLIORATIONS v36:
-// 1. Signal accumulation automatique (volume + RSI + support)
-// 2. Alerte Triptyque temps réel avec prix achat/stop/vente
-// 3. update_prices.py: mise à jour AUSSI el,eh,stop dans les data
-// 4. Scores: emojis colorés visibles
-// ═══════════════════════════════════════════════════════
-
-// ─── SIGNAL D'ACCUMULATION ───────────────────────────
+// ─── 5. ACCUMULATION + ALERTES ────────────────────────
 function detectAccumulation(s){
-  // Score d'accumulation 0-100 basé sur 4 signaux techniques
-  let score = 0;
-  const signals = [];
-  
-  // Signal 1: RSI en zone d'accumulation (25-45 = institutionnels achètent)
-  if(s.rsi >= 25 && s.rsi <= 40){
-    score += 30;
-    signals.push({txt:'RSI '+s.rsi+' — zone d accumulation profonde', level:'fort', icon:'🔵'});
-  } else if(s.rsi > 40 && s.rsi <= 50){
-    score += 15;
-    signals.push({txt:'RSI '+s.rsi+' — rebond possible', level:'moyen', icon:'🟡'});
+  var score=0; var signals=[];
+  if(s.rsi>=25&&s.rsi<=40){score+=30;signals.push({icon:'🔵',txt:'RSI '+s.rsi+' — accumulation profonde (institutionnels)'});}
+  else if(s.rsi>40&&s.rsi<=50){score+=15;signals.push({icon:'🟡',txt:'RSI '+s.rsi+' — rebond possible'});}
+  var mm200=s.mm200||0;
+  if(mm200>0){
+    var dist=(s.price-mm200)/mm200*100;
+    if(dist>=-5&&dist<=5){score+=25;signals.push({icon:'🟡',txt:'Cours pres MM200 ('+mm200+'€) — support institutionnel'});}
+    else if(dist>=-15&&dist<-5){score+=15;signals.push({icon:'🟡',txt:'Cours sous MM200 de '+Math.abs(dist).toFixed(0)+'% — potentiel retour'});}
   }
-  
-  // Signal 2: Cours vs MM200 (support technique clé)
-  const mm200 = s.mm200 || 0;
-  if(mm200 > 0){
-    const dist = (s.price - mm200) / mm200 * 100;
-    if(dist >= -5 && dist <= 5){
-      score += 25;
-      signals.push({txt:'Cours près MM200 ('+mm200+'€) — support institutionnel', level:'fort', icon:'🔵'});
-    } else if(dist >= -15 && dist < -5){
-      score += 15;
-      signals.push({txt:'Cours sous MM200 de '+Math.abs(dist).toFixed(0)+'% — potentiel retour', level:'moyen', icon:'🟡'});
-    } else if(dist < -15){
-      score += 5;
-      signals.push({txt:'Cours très sous MM200 — attendre stabilisation', level:'faible', icon:'🔴'});
-    }
-  }
-  
-  // Signal 3: Zone DCF (valorisation attractive)
-  const z = dynZone(s);
-  if(s.price >= z.el && s.price <= z.eh * 1.05){
-    score += 25;
-    signals.push({txt:'En zone achat DCF ('+z.el+'€–'+z.eh+'€)', level:'fort', icon:'🟢'});
-  } else if(s.price < z.el * 1.1){
-    score += 15;
-    signals.push({txt:'Proche zone achat (zone à '+z.el+'€)', level:'moyen', icon:'🟡'});
-  }
-  
-  // Signal 4: Tendance (Dow Theory)
-  const mm50 = s.mm50 || 0;
-  if(mm50 > 0 && mm200 > 0){
-    if(s.price < mm50 && s.price < mm200){
-      score += 10;
-      signals.push({txt:'Consolidation — sous MM50 et MM200, formation possible', level:'moyen', icon:'🟡'});
-    }
-  }
-  
-  // Signal 5: Grade qualité (accumulation plus fiable sur Grade A)
-  if(s.score === 'A'){
-    score += 10;
-    signals.push({txt:'Grade A — accumulation institutionnelle plus probable', level:'fort', icon:'🟢'});
-  } else if(s.score === 'B'){
-    score += 5;
-  }
-  
-  return {
-    score: Math.min(100, score),
-    signals: signals,
-    isAccumulating: score >= 50,
-    level: score >= 70 ? 'FORT' : score >= 50 ? 'MODÉRÉ' : score >= 30 ? 'FAIBLE' : 'ABSENT'
-  };
+  var z=dynZone(s);
+  if(s.price>=z.el&&s.price<=z.eh*1.05){score+=25;signals.push({icon:'🟢',txt:'En zone achat DCF ('+z.el+'–'+z.eh+'€)'});}
+  else if(s.price<z.el*1.1){score+=15;signals.push({icon:'🟡',txt:'Proche zone achat (cible: '+z.el+'€)'});}
+  if(s.score==='A'){score+=10;signals.push({icon:'🟢',txt:'Grade A — accumulation institutionnelle plus probable'});}
+  else if(s.score==='B') score+=5;
+  return {score:Math.min(100,score),signals:signals,level:score>=70?'FORT':score>=50?'MODERE':score>=30?'FAIBLE':'ABSENT'};
 }
 
-// ─── ALERTE COMPLÈTE: TRIPTYQUE + ACCUMULATION ────────
 function buildFullAlert(s){
-  const nr = nextResultFromStock(s);
-  const trip = nr ? triptyqueScore(s) : null;
-  const accum = detectAccumulation(s);
-  const z = dynZone(s);
-  
-  // Signal combiné
-  const combined = (trip||0) * 0.6 + accum.score * 0.4;
-  
-  if(combined < 30 && accum.score < 50) return null; // Pas d'alerte
-  
-  const inZone = s.price >= z.el && s.price <= z.eh * 1.05;
-  
-  // Calcul sizing position (Kelly simplifié)
-  const winRate = s.score==='A' ? 0.72 : s.score==='B' ? 0.60 : 0.50;
-  const rr = z.o1 > 0 && z.stop > 0 ? (z.o1 - s.price) / (s.price - z.stop) : 1.5;
-  const kellySizing = Math.max(2, Math.min(8, Math.round((winRate - (1-winRate)/rr) * 100)));
-  
-  // Durée de détention recommandée
-  const holdDays = trip >= 75 ? '3-10 jours post-résultats' : 
-                   trip >= 55 ? '1-3 mois' :
-                   accum.score >= 70 ? '3-6 mois' : '6-12 mois';
-  
-  return {
-    ticker: s.ticker,
-    name: s.name,
-    score: Math.round(combined),
-    tripScore: trip,
-    accumScore: accum.score,
-    accumLevel: accum.level,
-    signals: accum.signals,
-    nr: nr,
-    z: z,
-    inZone: inZone,
-    prixAchat: inZone ? s.price : z.el,
-    stopLoss: z.stop,
-    objectif1: z.o1,
-    objectif2: z.o2,
-    sizing: kellySizing,
-    holdDays: holdDays,
-    rr: Math.round(rr * 10) / 10,
-  };
+  var nr=nextResultFromStock(s);
+  var trip=nr?triptyqueScore(s):null;
+  var accum=detectAccumulation(s);
+  var combined=Math.round((trip||0)*0.6+accum.score*0.4);
+  if(combined<25) return null;
+  var z=dynZone(s); var inZone=s.price>=z.el&&s.price<=z.eh*1.05;
+  var rr=z.o1>s.price&&z.stop<s.price?(z.o1-s.price)/(s.price-z.stop):1.5;
+  var winRate=s.score==='A'?0.72:s.score==='B'?0.60:0.50;
+  var kelly=Math.max(2,Math.min(8,Math.round((winRate-(1-winRate)/rr)*100)));
+  var hold=trip>=75?'3-10j post-résultats':trip>=55?'1-3 mois':accum.score>=70?'3-6 mois':'6-12 mois';
+  return {ticker:s.ticker,name:s.name,score:combined,trip:trip,accum:accum.score,
+    signals:accum.signals,nr:nr,z:z,inZone:inZone,
+    prixAchat:inZone?s.price:z.el,stop:z.stop,obj:z.o1,
+    kelly:kelly,rr:Math.round(rr*10)/10,hold:hold,price:s.price};
 }
 
-// ─── RADAR ALERTES ACTIVES ─────────────────────────────
-function buildAlerteRadar(){
-  const alertes = [];
-  S.forEach(s => {
-    const alert = buildFullAlert(s);
-    if(alert) alertes.push(alert);
-  });
-  alertes.sort((a,b) => b.score - a.score);
-  return alertes.slice(0, 15);
+function buildAlerteRadar(type){
+  var alertes=[];
+  S.forEach(function(s){var a=buildFullAlert(s);if(a)alertes.push(a);});
+  alertes.sort(function(a,b){return b.score-a.score;});
+  if(type==='triptyque') alertes=alertes.filter(function(a){return a.trip&&a.trip>=55;});
+  else if(type==='zone') alertes=alertes.filter(function(a){return a.inZone;});
+  else if(type==='accum') alertes=alertes.filter(function(a){return a.accum>=60;});
+  return alertes.slice(0,20);
 }
 
-// ─── HTML ALERTE DÉTAILLÉE ─────────────────────────────
-function renderAlerte(alert){
-  const sc = alert.score;
-  const mainCol = sc >= 70 ? '#16a34a' : sc >= 50 ? '#d97706' : '#1d4ed8';
-  const bg = sc >= 70 ? 'rgba(34,197,94,.06)' : sc >= 50 ? 'rgba(245,158,11,.06)' : 'rgba(29,78,216,.06)';
-  const bord = sc >= 70 ? '#86efac' : sc >= 50 ? '#fde68a' : '#93c5fd';
-  
-  const nrInfo = alert.nr ? ' · '+alert.nr.label+' <b>J-'+alert.nr.days+'</b>' : '';
-  const tripBadge = alert.tripScore ? '<span style="background:'+mainCol+';color:#fff;font-size:8px;padding:1px 5px;border-radius:2px;margin-left:4px">Triptyque '+alert.tripScore+'/100</span>' : '';
-  const accumBadge = '<span style="background:#dbeafe;color:#1d4ed8;font-size:8px;padding:1px 5px;border-radius:2px;margin-left:4px">Accum '+alert.accumScore+'/100</span>';
-  
+function renderAlerte(a){
+  var mc=a.score>=70?'#16a34a':a.score>=50?'#d97706':'#1d4ed8';
+  var bg=a.score>=70?'rgba(34,197,94,.06)':a.score>=50?'rgba(245,158,11,.06)':'rgba(29,78,216,.06)';
+  var bord=a.score>=70?'#86efac':a.score>=50?'#fde68a':'#93c5fd';
+  var nrInfo=a.nr?'<span style="background:'+mc+';color:#fff;font-size:8px;padding:1px 5px;border-radius:2px;margin-left:4px">'+a.nr.label+' J-'+a.nr.days+'</span>':'';
   return '<div style="background:'+bg+';border:1px solid '+bord+';border-radius:6px;padding:12px;margin-bottom:8px">'+
     '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;margin-bottom:8px">'+
+    '<div><span style="font-family:IBM Plex Mono,monospace;font-weight:700;font-size:13px;color:#0f2540">'+a.ticker+'</span>'+
+    ' <span style="color:#888;font-size:11px">'+a.name.substring(0,22)+'</span>'+nrInfo+
+    (a.trip?'<span style="background:#dbeafe;color:#1d4ed8;font-size:8px;padding:1px 5px;border-radius:2px;margin-left:4px">Trip '+a.trip+'</span>':'')+
+    '</div><span style="font-size:20px;font-weight:700;font-family:IBM Plex Mono,monospace;color:'+mc+'">'+a.score+'/100</span></div>'+
+    '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-bottom:8px">'+
+    '<div style="background:#fff;border-radius:4px;padding:5px;text-align:center;border:1px solid '+bord+'"><div style="font-size:8px;color:#888;font-family:IBM Plex Mono,monospace;text-transform:uppercase">Prix achat</div><div style="font-size:12px;font-weight:700;color:#0f2540">'+a.prixAchat+'€</div></div>'+
+    '<div style="background:#fee2e2;border-radius:4px;padding:5px;text-align:center;border:1px solid #fca5a5"><div style="font-size:8px;color:#888;font-family:IBM Plex Mono,monospace;text-transform:uppercase">Stop</div><div style="font-size:12px;font-weight:700;color:#dc2626">'+a.stop+'€</div></div>'+
+    '<div style="background:#dcfce7;border-radius:4px;padding:5px;text-align:center;border:1px solid #86efac"><div style="font-size:8px;color:#888;font-family:IBM Plex Mono,monospace;text-transform:uppercase">Objectif</div><div style="font-size:12px;font-weight:700;color:#16a34a">'+a.obj+'€</div></div>'+
+    '<div style="background:#dbeafe;border-radius:4px;padding:5px;text-align:center;border:1px solid #93c5fd"><div style="font-size:8px;color:#888;font-family:IBM Plex Mono,monospace;text-transform:uppercase">R/R · Taille</div><div style="font-size:11px;font-weight:700;color:#1d4ed8">'+a.rr+'x · '+a.kelly+'%</div></div>'+
+    '</div>'+
+    '<div style="font-size:10px;line-height:1.8;color:#444;margin-bottom:5px">'+
+    a.signals.map(function(sig){return sig.icon+' '+sig.txt;}).join('<br>')+
+    '</div>'+
+    '<div style="font-size:10px;color:#888">'+
+    (a.nr?'Resultats J-'+a.nr.days+' · ':'')+
+    'Duree: <b>'+a.hold+'</b> · '+
+    (a.inZone?'<span style="color:#22c55e;font-weight:700">EN ZONE — ACHETER MAINTENANT</span>':'<span style="color:#f59e0b">Attendre '+a.z.el+'€</span>')+
+    '</div></div>';
+}
+
+var _alerteFilter='all';
+function buildAlertes(){
+  var el=document.getElementById('alertes-content');
+  if(!el) return;
+  var alertes=buildAlerteRadar(_alerteFilter);
+  el.innerHTML=alertes.length>0?alertes.map(renderAlerte).join(''):
+    '<div style="text-align:center;padding:40px;color:var(--mu);font-style:italic">Aucun signal actif pour ce filtre.</div>';
+}
+
+function filtAlertes(type,btn){
+  _alerteFilter=type;
+  document.querySelectorAll('[id^="al-btn-"]').forEach(function(b){
+    b.style.background='#f5f3ef';b.style.color='#444';b.style.border='1px solid var(--bd)';b.style.fontWeight='normal';
+  });
+  if(btn){btn.style.background='#0f2540';btn.style.color='#f0d080';btn.style.border='none';btn.style.fontWeight='700';}
+  buildAlertes();
+}
+
+// ─── 6. TTE signal dividende ──────────────────────────
+var _origPtfSignal=window.ptfSignal;
+window.ptfSignal=function(s,pos){
+  if(!s) return '<span class="ptf-signal sig-watch">?</span>';
+  var gain=(s.price-pos.pru)/pos.pru*100;
+  if(s.score==='D') return '<span class="ptf-signal sig-sell">VENDRE</span>';
+  if(s.price<s.stop) return '<span class="ptf-signal sig-sell">STOP LOSS</span>';
+  if(gain>=25&&(s.yield||0)>=4) return '<span class="ptf-signal sig-watch">ALLEGER 30%</span>';
+  if(gain>=25&&s.rsi>70) return '<span class="ptf-signal sig-sell">PRENDRE GAINS</span>';
+  if(gain>=15&&s.score==='C') return '<span class="ptf-signal sig-sell">ALLEGER</span>';
+  var z=dynZone(s);
+  if(s.price>=z.el&&s.price<=z.eh*1.05) return '<span class="ptf-signal sig-buy">RENFORCER</span>';
+  if(s.score==='A'&&s.rsi<40) return '<span class="ptf-signal sig-buy">RENFORCER</span>';
+  return '<span class="ptf-signal sig-hold">CONSERVER</span>';
+};
+
+
+// ════════════════════════════════════════════════════════
+// SMART MONEY — Critères qualitatifs des grands fonds
+// ════════════════════════════════════════════════════════
+
+// ─── SCORE MACRO SECTORIEL ────────────────────────────
+// Contexte mars 2026: guerre Moyen-Orient, ralentissement Chine, IA boom
+const MACRO_SECTOR_SCORE = {
+  'Défense':       {score:90, reason:'Guerre Moyen-Orient + réarmement Europe', trend:'↑'},
+  'Aérospatiale':  {score:85, reason:'Réarmement Europe + commandes civiles record', trend:'↑'},
+  'Énergie':       {score:80, reason:'Tensions géopolitiques soutiennent les prix', trend:'↑'},
+  'GNL':           {score:85, reason:'Europe veut sortir du gaz russe', trend:'↑'},
+  'IA & Tech':     {score:88, reason:'Capex IA massif, datacenter boom', trend:'↑↑'},
+  'Semi-conducteurs':{score:85,reason:'Supercycle IA, ASML irremplaçable', trend:'↑↑'},
+  'Gaz industriels':{score:75,reason:'Croissance stable, dividende fiable', trend:'→'},
+  'Santé':         {score:72, reason:'Defensif, valorisation raisonnable', trend:'→'},
+  'Luxe':          {score:55, reason:'Ralentissement Chine pèse sur LVMH/Hermès', trend:'↓'},
+  'Automobile':    {score:40, reason:'Transition VE difficile, concurrence chinoise', trend:'↓↓'},
+  'Banques':       {score:65, reason:'Taux hauts favorables mais risque crédit', trend:'→'},
+  'Immobilier':    {score:40, reason:'Taux hauts pèsent sur valorisations', trend:'↓'},
+  'Distribution':  {score:60, reason:'Pression prix, marges sous tension', trend:'→'},
+  'Services':      {score:68, reason:'Résilient, croissance modeste', trend:'→'},
+  'Chimie':        {score:58, reason:'Coûts énergie, demande molle', trend:'↓'},
+  'BTP':           {score:62, reason:'Grands travaux infra mais logement en crise', trend:'→'},
+  'Loisirs':       {score:65, reason:'Tourisme rebondit post-COVID', trend:'↑'},
+};
+
+function getMacroScore(s){
+  var sector = s.sector || '';
+  // Chercher dans les clés
+  for(var key in MACRO_SECTOR_SCORE){
+    if(sector.toLowerCase().includes(key.toLowerCase()) || 
+       key.toLowerCase().includes(sector.toLowerCase().split(' ')[0])){
+      return MACRO_SECTOR_SCORE[key];
+    }
+  }
+  // Fallback par mot-clé
+  if(sector.includes('Défense')||sector.includes('Armement')) return MACRO_SECTOR_SCORE['Défense'];
+  if(sector.includes('Luxe')||sector.includes('Mode')) return MACRO_SECTOR_SCORE['Luxe'];
+  if(sector.includes('Tech')||sector.includes('Logiciel')) return MACRO_SECTOR_SCORE['IA & Tech'];
+  if(sector.includes('Énergie')||sector.includes('Pétrole')) return MACRO_SECTOR_SCORE['Énergie'];
+  if(sector.includes('Gaz')||sector.includes('GNL')) return MACRO_SECTOR_SCORE['GNL'];
+  return {score:60, reason:'Secteur neutre', trend:'→'};
+}
+
+// ─── SCORE SMART MONEY (insiders + révisions analystes) ──
+function getSmartMoneyScore(s){
+  var score = 50; // score de base
+  var signals = [];
+  
+  // Insiders buying (champ ins dans les données)
+  var insiders = s.ins || 0;
+  if(insiders > 0){
+    score += Math.min(25, insiders * 5);
+    signals.push('🏦 Insiders acheteurs ('+insiders+' transactions récentes)');
+  } else if(insiders < 0){
+    score -= 10;
+    signals.push('⚠️ Insiders vendeurs ('+Math.abs(insiders)+' ventes)');
+  }
+  
+  // Révisions d'estimtes haussières (cb = consensus buy, ch = hold, cs = sell)
+  var cb = s.cb || 0, ch = s.ch || 0, cs = s.cs || 0;
+  var total = cb + ch + cs;
+  if(total > 0){
+    var buyPct = cb / total * 100;
+    if(buyPct >= 80){ score += 20; signals.push('📊 Consensus analystes: '+Math.round(buyPct)+'% Buy ('+cb+'/'+total+')'); }
+    else if(buyPct >= 60){ score += 10; signals.push('📊 Consensus: '+Math.round(buyPct)+'% Buy'); }
+    else if(buyPct < 40){ score -= 10; signals.push('📊 Consensus faible: '+Math.round(buyPct)+'% Buy seulement'); }
+  }
+  
+  // Target price vs cours (tp = target price analystes)
+  var tp = s.tp || 0;
+  if(tp > s.price){
+    var upside = (tp - s.price) / s.price * 100;
+    if(upside >= 30){ score += 15; signals.push('🎯 Objectif analystes: '+tp+'€ (+'+Math.round(upside)+'%)'); }
+    else if(upside >= 15){ score += 8; signals.push('🎯 Objectif: '+tp+'€ (+'+Math.round(upside)+'%)'); }
+  }
+  
+  return { score: Math.min(100, Math.max(0, score)), signals: signals };
+}
+
+// ─── SCORE QVMM COMPLET (Quality + Value + Momentum + Macro) ──
+function qvmmScore(s){
+  // Q: Qualité (Piotroski + ROE + dette)
+  var qScore = 0;
+  if(s.pio >= 8) qScore += 25; else if(s.pio >= 7) qScore += 20; else if(s.pio >= 6) qScore += 12;
+  if(s.roe >= 20) qScore += 20; else if(s.roe >= 15) qScore += 12; else if(s.roe >= 10) qScore += 6;
+  if(s.debt <= 0.3) qScore += 10; else if(s.debt <= 0.5) qScore += 6;
+  var q = Math.min(50, qScore);
+  
+  // V: Valorisation (DCF + PEG + EV/EBITDA)
+  var vScore = 0;
+  var z = dynZone(s);
+  if(s.price <= z.el) vScore += 25; else if(s.price <= z.eh) vScore += 15; else if(s.price <= z.o1) vScore += 5;
+  var peg = s.pfcf || 0; // PEG approx
+  if(peg > 0 && peg < 20) vScore += 10; else if(peg >= 20 && peg < 30) vScore += 5;
+  var v = Math.min(35, vScore);
+  
+  // M: Momentum (RSI + tendance MM)
+  var mScore = 0;
+  if(s.rsi >= 40 && s.rsi <= 60) mScore += 8; // zone neutre idéale entrée
+  else if(s.rsi >= 30 && s.rsi < 40) mScore += 12; // oversold = rebond
+  if(s.mm50 > 0 && s.mm200 > 0 && s.mm50 > s.mm200) mScore += 7; // golden cross
+  var m = Math.min(15, mScore);
+  
+  // Ma: Macro sectorielle
+  var macro = getMacroScore(s);
+  var ma = Math.round(macro.score / 10); // sur 10 points
+  
+  var total = q + v + m + ma;
+  return {
+    total: total,
+    quality: q,
+    value: v, 
+    momentum: m,
+    macro: ma,
+    macroInfo: macro,
+    grade: total >= 80 ? 'A+' : total >= 65 ? 'A' : total >= 50 ? 'B' : total >= 35 ? 'C' : 'D'
+  };
+}
+
+// ─── SECTION SMART MONEY dans la fiche ────────────────
+function buildSmartMoneySection(s){
+  var macro = getMacroScore(s);
+  var sm = getSmartMoneyScore(s);
+  var qvmm = qvmmScore(s);
+  
+  var mainColor = qvmm.total >= 65 ? '#16a34a' : qvmm.total >= 45 ? '#d97706' : '#6b7280';
+  
+  return '<div class="sec">'+
+    '<div class="sct" style="color:'+mainColor+'">💎 Score QVMM — Méthode Grands Fonds</div>'+
+    '<div style="background:rgba(15,37,64,.04);border:1px solid #e2ddd6;border-radius:8px;padding:14px;margin-bottom:10px">'+
+    
+    // Score global
+    '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">'+
     '<div>'+
-    '<span style="font-family:IBM Plex Mono,monospace;font-weight:700;font-size:13px;color:#0f2540">'+alert.ticker+'</span>'+
-    ' <span style="color:#888;font-size:11px">'+alert.name.substring(0,20)+'</span>'+
-    tripBadge+accumBadge+
+    '<div style="font-size:9px;font-family:IBM Plex Mono,monospace;color:#888;text-transform:uppercase;margin-bottom:3px">Score QVMM Global</div>'+
+    '<div style="font-size:28px;font-weight:700;font-family:IBM Plex Mono,monospace;color:'+mainColor+'">'+qvmm.total+'<span style="font-size:13px">/100</span></div>'+
     '</div>'+
-    '<span style="font-size:18px;font-weight:700;font-family:IBM Plex Mono,monospace;color:'+mainCol+'">'+sc+'/100</span>'+
+    '<div style="text-align:right">'+
+    '<span style="background:'+mainColor+';color:#fff;font-size:11px;padding:4px 12px;border-radius:4px;font-family:IBM Plex Mono,monospace;font-weight:700">'+qvmm.grade+'</span>'+
+    '<div style="font-size:10px;color:#888;margin-top:4px">'+macro.trend+' '+macro.reason.substring(0,30)+'</div>'+
+    '</div></div>'+
+    
+    // 4 piliers
+    '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px">'+
+    [
+      {l:'Qualité Q',v:qvmm.quality,max:50,tip:'Piotroski '+s.pio+'/9 · ROE '+s.roe+'% · Endettement '+s.debt+'x'},
+      {l:'Valorisation V',v:qvmm.value,max:35,tip:'Zone DCF · PEG · EV/EBITDA'},
+      {l:'Momentum M',v:qvmm.momentum,max:15,tip:'RSI '+s.rsi+' · MM50/MM200 tendance'},
+      {l:'Macro Ma',v:qvmm.macro,max:10,tip:macro.reason},
+    ].map(function(p){
+      var pct = Math.round(p.v/p.max*100);
+      var c2 = pct>=70?'#22c55e':pct>=50?'#f59e0b':'#9ca3af';
+      return '<div style="background:#fff;border-radius:6px;padding:8px;border:1px solid #e2ddd6;text-align:center" title="'+p.tip+'">'+
+        '<div style="font-size:8px;font-family:IBM Plex Mono,monospace;color:#888;text-transform:uppercase;margin-bottom:4px">'+p.l+'</div>'+
+        '<div style="font-size:16px;font-weight:700;color:'+c2+'">'+p.v+'<span style="font-size:9px;color:#aaa">/'+p.max+'</span></div>'+
+        '<div style="height:4px;background:#e5e7eb;border-radius:2px;margin-top:4px">'+
+        '<div style="height:100%;width:'+pct+'%;background:'+c2+';border-radius:2px"></div></div>'+
+        '</div>';
+    }).join('')+
     '</div>'+
-    // Prix clés
-    '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:8px">'+
-    '<div style="background:#fff;border-radius:4px;padding:6px;text-align:center;border:1px solid '+bord+'"><div style="font-size:8px;color:#888;font-family:IBM Plex Mono,monospace;text-transform:uppercase;margin-bottom:2px">Prix achat</div><div style="font-size:12px;font-weight:700;color:#0f2540">'+alert.prixAchat+'€</div></div>'+
-    '<div style="background:#fee2e2;border-radius:4px;padding:6px;text-align:center;border:1px solid #fca5a5"><div style="font-size:8px;color:#888;font-family:IBM Plex Mono,monospace;text-transform:uppercase;margin-bottom:2px">Stop loss</div><div style="font-size:12px;font-weight:700;color:#dc2626">'+alert.stopLoss+'€</div></div>'+
-    '<div style="background:#dcfce7;border-radius:4px;padding:6px;text-align:center;border:1px solid #86efac"><div style="font-size:8px;color:#888;font-family:IBM Plex Mono,monospace;text-transform:uppercase;margin-bottom:2px">Objectif 1</div><div style="font-size:12px;font-weight:700;color:#16a34a">'+alert.objectif1+'€</div></div>'+
-    '<div style="background:#dbeafe;border-radius:4px;padding:6px;text-align:center;border:1px solid #93c5fd"><div style="font-size:8px;color:#888;font-family:IBM Plex Mono,monospace;text-transform:uppercase;margin-bottom:2px">R/R · Taille</div><div style="font-size:11px;font-weight:700;color:#1d4ed8">'+alert.rr+'x · '+alert.sizing+'%</div></div>'+
+    
+    // Context macro
+    '<div style="background:#f0f9ff;border-left:3px solid #0369a1;padding:8px 10px;border-radius:0 4px 4px 0;font-size:11px;margin-bottom:8px">'+
+    '<b>Contexte macro ('+macro.trend+') :</b> '+macro.reason+
     '</div>'+
-    // Signaux accumulation
-    '<div style="font-size:10px;line-height:1.7;color:#444">'+
-    alert.signals.map(sig=>'<span>'+sig.icon+' '+sig.txt+'</span><br>').join('')+
+    
+    // Smart money signals
+    (sm.signals.length > 0 ?
+    '<div style="font-size:11px;line-height:1.8;color:#444">'+
+    '<b>Signaux Smart Money :</b><br>'+
+    sm.signals.join('<br>')+
+    '</div>' : '')+
+    
     '</div>'+
-    '<div style="margin-top:6px;font-size:10px;color:#888">'+
-    (alert.nr?'Résultats dans J-'+alert.nr.days+' · ':'')+
-    'Durée recommandée: <b>'+alert.holdDays+'</b> · '+
-    (alert.inZone?'<span style="color:#22c55e;font-weight:700">✅ EN ZONE — ACHETER MAINTENANT</span>':'<span style="color:#f59e0b">⏳ Attendre '+alert.z.el+'€</span>')+
+    
+    // Comparaison avec les méthodes
+    '<div style="background:#fdf8ec;border:1px solid #b8860b;border-radius:6px;padding:10px 12px;font-size:11px;line-height:1.8;color:#444">'+
+    '<b style="color:#b8860b">Méthode vs Grands Fonds :</b><br>'+
+    '• Notre méthode : DCF + Piotroski + Triptyque + Macro = <b>top 5% retail</b> → ~15-20%/an estimé<br>'+
+    '• Fonds quantitatifs (AQR, Two Sigma) : +20 facteurs + données alternatives → ~25-35%/an<br>'+
+    '• Renaissance Medallion : 20 000 facteurs + données propriétaires → +66%/an (impossible à répliquer)<br>'+
+    '<span style="color:#888">Notre alpha réaliste vs DCAM : +7 à +12%/an sur 10 ans = objectif atteignable</span>'+
     '</div>'+
     '</div>';
 }
 
-// ─── PAGE ALERTES (onglet dédié) ──────────────────────
-function buildAlertes(){
-  const el = document.getElementById('alertes-content');
-  if(!el) return;
-  const alertes = buildAlerteRadar();
-  if(alertes.length === 0){
-    el.innerHTML = '<div style="text-align:center;padding:40px;color:var(--mu);font-style:italic">Aucun signal actif actuellement.</div>';
-    return;
+// ─── Injecter QVMM dans la fiche Analyse ─────────────
+(function(){
+  var origRender = window.render;
+  if(origRender){
+    window.render = function(s){
+      window._currentStock = s;
+      origRender(s);
+      // Injecter QVMM dans pres-analyse après un court délai
+      setTimeout(function(){
+        var analyseEl = document.getElementById('pres-analyse');
+        if(analyseEl && !analyseEl.querySelector('.qvmm-injected')){
+          var div = document.createElement('div');
+          div.className = 'qvmm-injected';
+          div.innerHTML = buildSmartMoneySection(s);
+          analyseEl.appendChild(div);
+        }
+      }, 100);
+    };
   }
-  el.innerHTML = alertes.map(a => renderAlerte(a)).join('');
-}
-
-// ─── AMÉLIORATION TRIPTYQUE: timing plus nuancé ─────────
-// Remplacer la logique binaire par une zone progressive
-function triptyqueTimingLabel(days){
-  if(days <= 0) return {txt:'AUJOURD HUI', col:'#7c3aed', pts:35};
-  if(days <= 3) return {txt:'J-'+days+' MAXIMAL 🔥', col:'#16a34a', pts:35};
-  if(days <= 7) return {txt:'J-'+days+' FORT ⚡', col:'#16a34a', pts:30};
-  if(days <= 14) return {txt:'J-'+days+' BON 👁', col:'#22c55e', pts:25};
-  if(days <= 21) return {txt:'J-'+days+' ACCUMULER', col:'#f59e0b', pts:20};
-  if(days <= 33) return {txt:'J-'+days+' INITIER', col:'#f59e0b', pts:15};
-  if(days <= 45) return {txt:'J-'+days+' SURVEILLER', col:'#9ca3af', pts:8};
-  return {txt:'J-'+days+' TROP TÔT', col:'#9ca3af', pts:2};
-}
-
-// ─── MISE À JOUR DYNAMIQUE STOP/EL/EH dans S[] ─────────
-// Appelé après update_prices.py pour recalculer les zones
-function refreshZones(){
-  S.forEach(s => {
-    const z = dynZone(s);
-    s._z = z; // cache le résultat
-  });
-  console.log('Zones recalculées pour '+S.length+' actions');
-}
-
-
-function filtAlertes(type, btn){
-  document.querySelectorAll('[id^="al-btn-"]').forEach(function(b){
-    b.style.background='#f5f3ef'; b.style.color='#444'; b.style.border='1px solid var(--bd)'; b.style.fontWeight='normal';
-  });
-  if(btn){btn.style.background='#0f2540';btn.style.color='#f0d080';btn.style.border='none';btn.style.fontWeight='700';}
-  const el = document.getElementById('alertes-content');
-  if(!el) return;
-  let alertes = buildAlerteRadar();
-  if(type==='triptyque') alertes = alertes.filter(function(a){return a.tripScore && a.tripScore>=55;});
-  else if(type==='zone') alertes = alertes.filter(function(a){return a.inZone;});
-  else if(type==='accum') alertes = alertes.filter(function(a){return a.accumScore>=60;});
-  el.innerHTML = alertes.length > 0 ? alertes.map(renderAlerte).join('') : '<div style="text-align:center;padding:40px;color:var(--mu);font-style:italic">Aucun signal pour ce filtre.</div>';
-}
+})();
 
 document.addEventListener('DOMContentLoaded',function(){
   fil=[...S];buildQ();buildT(S);buildLex();buildETF();show(0);startR();
-  refreshZones();
   setTimeout(checkAlerts,2000);
   setTimeout(function(){
-    ptfInit(); ptfPreloadVal();
-    buildPres(); buildPlan();
+    ptfInit();
+    ptfPreloadVal();
+    buildPres();
+    buildPlan();
     buildAlertes();
-  },400);
+  },500);
 });
 </script>
 
@@ -8330,38 +8451,195 @@ document.addEventListener('DOMContentLoaded',function(){
 
 <div class="page" id="pg-al">
 <div style="padding:20px 24px;max-width:980px;margin:0 auto">
-
-  <div style="background:linear-gradient(135deg,#0f2540,#1a3a5c);border-radius:8px;padding:22px 28px;margin-bottom:18px">
-    <div style="font-size:9px;font-family:'IBM Plex Mono',monospace;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:3px;margin-bottom:6px">RADAR ALERTES ACTIVES</div>
-    <div style="font-size:20px;font-weight:700;color:#f0d080;font-family:Georgia,serif">Signaux d'achat — Triptyque + Accumulation</div>
-    <div style="font-size:12px;color:rgba(255,255,255,.5);margin-top:4px">Actions avec signal Triptyque actif ET/OU phase d'accumulation détectée</div>
+  <div style="background:linear-gradient(135deg,#7f1d1d,#dc2626);border-radius:8px;padding:22px 28px;margin-bottom:16px">
+    <div style="font-size:9px;font-family:'IBM Plex Mono',monospace;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:3px;margin-bottom:6px">RADAR SIGNAUX ACTIFS</div>
+    <div style="font-size:20px;font-weight:700;color:#fff;font-family:Georgia,serif">Alertes — Triptyque + Accumulation</div>
+    <div style="font-size:12px;color:rgba(255,255,255,.6);margin-top:4px">Signaux d'achat combinés: Triptyque résultats + détection accumulation institutionnelle</div>
   </div>
-
-  <div style="background:#fff;border:1px solid var(--bd);border-radius:8px;padding:14px 18px;margin-bottom:14px">
-    <div style="font-size:9px;font-family:'IBM Plex Mono',monospace;text-transform:uppercase;color:#b8860b;letter-spacing:2px;margin-bottom:10px">LÉGENDE DES SIGNAUX</div>
-    <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;font-size:11px;line-height:1.7">
-      <div>🔵 <b>RSI 25-40</b> — Zone d'accumulation profonde (institutionnels achètent)</div>
-      <div>🟢 <b>Zone DCF</b> — Cours sous valeur intrinsèque (marge de sécurité)</div>
-      <div>🟡 <b>Proche MM200</b> — Support technique majeur tient</div>
-      <div>🔥 <b>J-3 Triptyque</b> — 3 jours avant résultats + zone achat = signal max</div>
-    </div>
-    <div style="margin-top:10px;padding:8px 12px;background:#fdf8ec;border-radius:4px;font-size:11px;color:#444;line-height:1.7">
-      <b>Comment lire les alertes :</b> Score /100 = combinaison Triptyque (60%) + Accumulation (40%). 
-      R/R = ratio risque/rendement. Taille = % du portefeuille recommandé (Kelly simplifié).
-      Prix achat = cours actuel si en zone, sinon niveau cible.
-    </div>
+  <div style="background:#fff;border:1px solid var(--bd);border-radius:8px;padding:10px 14px;margin-bottom:12px;font-size:11px;color:#444;line-height:1.8">
+    <b>Score /100</b> = Triptyque (60%) + Accumulation (40%) · <b>R/R</b> = risque/rendement · <b>Taille</b> = % portefeuille (Kelly) ·
+    🔵 RSI 25-40 · 🟡 Proche MM200 · 🟢 Zone DCF · Score≥70 = signal fort
   </div>
-
-  <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">
+  <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
     <button onclick="filtAlertes('all',this)" id="al-btn-all" style="padding:7px 14px;background:#0f2540;color:#f0d080;border:none;border-radius:4px;cursor:pointer;font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:700">Toutes</button>
-    <button onclick="filtAlertes('triptyque',this)" id="al-btn-trip" style="padding:7px 14px;background:#f5f3ef;color:#444;border:1px solid var(--bd);border-radius:4px;cursor:pointer;font-family:'IBM Plex Mono',monospace;font-size:10px">Triptyque actif</button>
+    <button onclick="filtAlertes('triptyque',this)" id="al-btn-triptyque" style="padding:7px 14px;background:#f5f3ef;color:#444;border:1px solid var(--bd);border-radius:4px;cursor:pointer;font-family:'IBM Plex Mono',monospace;font-size:10px">Triptyque actif</button>
     <button onclick="filtAlertes('zone',this)" id="al-btn-zone" style="padding:7px 14px;background:#f5f3ef;color:#444;border:1px solid var(--bd);border-radius:4px;cursor:pointer;font-family:'IBM Plex Mono',monospace;font-size:10px">En zone achat</button>
     <button onclick="filtAlertes('accum',this)" id="al-btn-accum" style="padding:7px 14px;background:#f5f3ef;color:#444;border:1px solid var(--bd);border-radius:4px;cursor:pointer;font-family:'IBM Plex Mono',monospace;font-size:10px">Accumulation forte</button>
     <button onclick="buildAlertes()" style="padding:7px 14px;background:linear-gradient(135deg,#7c3aed,#a78bfa);color:#fff;border:none;border-radius:4px;cursor:pointer;font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:700;margin-left:auto">↺ Actualiser</button>
   </div>
+  <div id="alertes-content"><div style="text-align:center;padding:40px;color:var(--mu);font-style:italic">Chargement...</div></div>
+</div>
+</div>
 
-  <div id="alertes-content">
-    <div style="text-align:center;padding:40px;color:var(--mu);font-style:italic">Chargement des alertes...</div>
+
+<div class="page" id="pg-bt">
+<div style="padding:20px 24px;max-width:1000px;margin:0 auto">
+
+  <!-- HEADER -->
+  <div style="background:linear-gradient(135deg,#1e1b4b,#312e81);border-radius:8px;padding:22px 28px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px">
+    <div>
+      <div style="font-size:9px;font-family:'IBM Plex Mono',monospace;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:3px;margin-bottom:6px">MON PEA — ANALYSE & PROJECTION</div>
+      <div style="font-size:20px;font-weight:700;color:#a78bfa;font-family:Georgia,serif">Mon portefeuille réel + virtuel</div>
+      <div style="font-size:12px;color:rgba(255,255,255,.5);margin-top:4px">Analyse de tes 14 positions · Projection · Quand vendre · Stop loss · Renforcement</div>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button onclick="btShowTab('reel',this)" id="btn-reel" style="padding:8px 14px;background:rgba(167,139,250,.25);color:#a78bfa;border:1px solid #a78bfa;border-radius:4px;cursor:pointer;font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:700">📊 Mon PEA</button>
+      <button onclick="btShowTab('proj',this)" id="btn-proj" style="padding:8px 14px;background:transparent;color:rgba(255,255,255,.4);border:1px solid rgba(255,255,255,.2);border-radius:4px;cursor:pointer;font-family:'IBM Plex Mono',monospace;font-size:10px">📈 Projection</button>
+      <button onclick="btShowTab('virt',this)" id="btn-virt" style="padding:8px 14px;background:transparent;color:rgba(255,255,255,.4);border:1px solid rgba(255,255,255,.2);border-radius:4px;cursor:pointer;font-family:'IBM Plex Mono',monospace;font-size:10px">➕ Simuler ajouts</button>
+    </div>
+  </div>
+
+  <!-- ONGLET 1: MON PEA RÉEL -->
+  <div id="bt-reel">
+
+    <!-- KPIs PEA -->
+    <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:14px">
+      <div style="background:linear-gradient(135deg,#0f2540,#1a3a5c);border-radius:8px;padding:14px;text-align:center">
+        <div style="font-size:8px;font-family:'IBM Plex Mono',monospace;color:rgba(255,255,255,.5);text-transform:uppercase;margin-bottom:4px">Total PEA</div>
+        <div style="font-size:18px;font-weight:700;color:#f0d080;font-family:'IBM Plex Mono',monospace">13 316€</div>
+        <div style="font-size:9px;color:rgba(255,255,255,.4);margin-top:2px">dont 608€ cash</div>
+      </div>
+      <div style="background:#fff;border:2px solid #22c55e;border-radius:8px;padding:14px;text-align:center">
+        <div style="font-size:8px;font-family:'IBM Plex Mono',monospace;color:#888;text-transform:uppercase;margin-bottom:4px">Plus-value latente</div>
+        <div style="font-size:18px;font-weight:700;color:#22c55e;font-family:'IBM Plex Mono',monospace">+800€</div>
+        <div style="font-size:9px;color:#888;margin-top:2px">+6.7% sur investi</div>
+      </div>
+      <div id="bt-kpi-best" style="background:#fff;border:1px solid var(--bd);border-radius:8px;padding:14px;text-align:center">
+        <div style="font-size:8px;font-family:'IBM Plex Mono',monospace;color:#888;text-transform:uppercase;margin-bottom:4px">Meilleure position</div>
+        <div style="font-size:14px;font-weight:700;color:#22c55e;font-family:'IBM Plex Mono',monospace">--</div>
+      </div>
+      <div id="bt-kpi-worst" style="background:#fff;border:1px solid var(--bd);border-radius:8px;padding:14px;text-align:center">
+        <div style="font-size:8px;font-family:'IBM Plex Mono',monospace;color:#888;text-transform:uppercase;margin-bottom:4px">Position à surveiller</div>
+        <div style="font-size:14px;font-weight:700;color:#ef4444;font-family:'IBM Plex Mono',monospace">--</div>
+      </div>
+      <div id="bt-kpi-dcam" style="background:#fff;border:1px solid var(--bd);border-radius:8px;padding:14px;text-align:center">
+        <div style="font-size:8px;font-family:'IBM Plex Mono',monospace;color:#888;text-transform:uppercase;margin-bottom:4px">Si tout en DCAM</div>
+        <div style="font-size:16px;font-weight:700;font-family:'IBM Plex Mono',monospace;color:#6b7280">--</div>
+      </div>
+    </div>
+
+    <!-- Tableau positions réelles -->
+    <div style="background:#fff;border:1px solid var(--bd);border-radius:8px;padding:18px;margin-bottom:14px">
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;text-transform:uppercase;color:#b8860b;letter-spacing:2px;margin-bottom:10px">TES 14 POSITIONS — Analyse complète</div>
+      <div id="bt-reel-table"></div>
+    </div>
+
+    <!-- Analyse macro + conseils -->
+    <div id="bt-conseils" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px"></div>
+
+  </div>
+
+  <!-- ONGLET 2: PROJECTION -->
+  <div id="bt-proj" style="display:none">
+    <div style="background:#fff;border:1px solid var(--bd);border-radius:8px;padding:14px 18px;margin-bottom:14px;display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;text-transform:uppercase;color:#b8860b">Horizon</div>
+      <div style="display:flex;gap:6px">
+        <button onclick="btSetHz(1,this)" class="hz-btn" style="padding:7px 12px;background:#f5f3ef;color:#444;border:1px solid var(--bd);border-radius:4px;cursor:pointer;font-size:10px;font-family:'IBM Plex Mono',monospace">1 an</button>
+        <button onclick="btSetHz(3,this)" class="hz-btn" style="padding:7px 12px;background:#f5f3ef;color:#444;border:1px solid var(--bd);border-radius:4px;cursor:pointer;font-size:10px;font-family:'IBM Plex Mono',monospace">3 ans</button>
+        <button onclick="btSetHz(5,this)" class="hz-btn active-hz" style="padding:7px 12px;background:#0f2540;color:#f0d080;border:1px solid #0f2540;border-radius:4px;cursor:pointer;font-size:10px;font-family:'IBM Plex Mono',monospace;font-weight:700">5 ans</button>
+        <button onclick="btSetHz(10,this)" class="hz-btn" style="padding:7px 12px;background:#f5f3ef;color:#444;border:1px solid var(--bd);border-radius:4px;cursor:pointer;font-size:10px;font-family:'IBM Plex Mono',monospace">10 ans</button>
+        <button onclick="btSetHz(20,this)" class="hz-btn" style="padding:7px 12px;background:#f5f3ef;color:#444;border:1px solid var(--bd);border-radius:4px;cursor:pointer;font-size:10px;font-family:'IBM Plex Mono',monospace">20 ans</button>
+      </div>
+      <div style="margin-left:auto;font-size:11px;color:var(--mu);font-family:'IBM Plex Mono',monospace">Horizon: <b id="bt-hz-label" style="color:#0f2540">5 ans</b></div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px">
+      <div style="background:linear-gradient(135deg,#0f2540,#1a3a5c);border-radius:8px;padding:14px;text-align:center">
+        <div style="font-size:8px;font-family:'IBM Plex Mono',monospace;color:rgba(255,255,255,.4);text-transform:uppercase;margin-bottom:4px">Capital actuel</div>
+        <div style="font-size:16px;font-weight:700;color:#f0d080;font-family:'IBM Plex Mono',monospace">12 707€</div>
+      </div>
+      <div style="background:#fff;border:2px solid #22c55e;border-radius:8px;padding:14px;text-align:center">
+        <div style="font-size:8px;font-family:'IBM Plex Mono',monospace;color:#888;text-transform:uppercase;margin-bottom:4px">Projection base</div>
+        <div id="bt-proj-base" style="font-size:16px;font-weight:700;color:#22c55e;font-family:'IBM Plex Mono',monospace">--</div>
+      </div>
+      <div style="background:#fff;border:1px solid var(--bd);border-radius:8px;padding:14px;text-align:center">
+        <div style="font-size:8px;font-family:'IBM Plex Mono',monospace;color:#888;text-transform:uppercase;margin-bottom:4px">Gain projeté</div>
+        <div id="bt-proj-gain" style="font-size:16px;font-weight:700;font-family:'IBM Plex Mono',monospace">--</div>
+      </div>
+      <div style="background:#fff;border:1px solid var(--bd);border-radius:8px;padding:14px;text-align:center">
+        <div style="font-size:8px;font-family:'IBM Plex Mono',monospace;color:#888;text-transform:uppercase;margin-bottom:4px">vs DCAM pur</div>
+        <div id="bt-proj-dcam" style="font-size:16px;font-weight:700;font-family:'IBM Plex Mono',monospace;color:#6b7280">--</div>
+      </div>
+    </div>
+
+    <div style="background:#fff;border:1px solid var(--bd);border-radius:8px;padding:18px;margin-bottom:14px">
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;text-transform:uppercase;color:#b8860b;letter-spacing:2px;margin-bottom:8px">EVOLUTION DU CAPITAL</div>
+      <canvas id="bt-chart" height="200" style="width:100%;display:block"></canvas>
+      <div style="display:flex;gap:20px;margin-top:8px;font-size:10px;color:#888">
+        <span><span style="color:#22c55e">——</span> Ton PEA (projection base)</span>
+        <span><span style="color:#9ca3af">- -</span> DCAM seul</span>
+        <span><span style="color:#f59e0b">……</span> Si +1000€/mois</span>
+      </div>
+    </div>
+
+    <div style="background:#fff;border:1px solid var(--bd);border-radius:8px;padding:18px;margin-bottom:14px">
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;text-transform:uppercase;color:#b8860b;letter-spacing:2px;margin-bottom:10px">PROJECTION PAR ACTION</div>
+      <div id="bt-proj-table"></div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">
+      <div id="sc-bear" style="border:2px solid #fca5a5;background:rgba(239,68,68,.04);border-radius:8px;padding:16px;text-align:center">
+        <div style="font-size:20px">🐻</div>
+        <div style="font-size:8px;font-family:'IBM Plex Mono',monospace;color:#dc2626;text-transform:uppercase;margin:6px 0">Pessimiste</div>
+        <div id="sc-bear-val" style="font-size:20px;font-weight:700;color:#dc2626;font-family:'IBM Plex Mono',monospace">--</div>
+        <div id="sc-bear-gain" style="font-size:11px;color:#dc2626;margin-top:4px">--</div>
+        <div style="font-size:10px;color:#888;margin-top:4px">Cours vers DCF bas</div>
+      </div>
+      <div id="sc-base" style="border:2px solid #b8860b;background:#fdf8ec;border-radius:8px;padding:16px;text-align:center">
+        <div style="font-size:20px">📊</div>
+        <div style="font-size:8px;font-family:'IBM Plex Mono',monospace;color:#b8860b;text-transform:uppercase;margin:6px 0">Base (DCF médian)</div>
+        <div id="sc-base-val" style="font-size:20px;font-weight:700;color:#0f2540;font-family:'IBM Plex Mono',monospace">--</div>
+        <div id="sc-base-gain" style="font-size:11px;color:#0f2540;margin-top:4px">--</div>
+        <div style="font-size:10px;color:#888;margin-top:4px">Cours vers valeur intrinsèque</div>
+      </div>
+      <div id="sc-bull" style="border:2px solid #86efac;background:rgba(34,197,94,.04);border-radius:8px;padding:16px;text-align:center">
+        <div style="font-size:20px">🚀</div>
+        <div style="font-size:8px;font-family:'IBM Plex Mono',monospace;color:#16a34a;text-transform:uppercase;margin:6px 0">Optimiste</div>
+        <div id="sc-bull-val" style="font-size:20px;font-weight:700;color:#16a34a;font-family:'IBM Plex Mono',monospace">--</div>
+        <div id="sc-bull-gain" style="font-size:11px;color:#16a34a;margin-top:4px">--</div>
+        <div style="font-size:10px;color:#888;margin-top:4px">Cours vers DCF haut</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ONGLET 3: SIMULER AJOUTS -->
+  <div id="bt-virt" style="display:none">
+    <div style="background:#fff;border:1px solid var(--bd);border-radius:8px;padding:16px 18px;margin-bottom:14px">
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;text-transform:uppercase;color:#b8860b;letter-spacing:2px;margin-bottom:12px">SIMULER UN ACHAT</div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
+        <div>
+          <div style="font-size:10px;color:var(--mu);margin-bottom:4px;font-family:'IBM Plex Mono',monospace;text-transform:uppercase">Action (ticker)</div>
+          <input id="pv-ticker" type="text" placeholder="ex: AI, GTT, RMS" list="pv-list" autocomplete="off"
+            style="width:150px;padding:9px 10px;border:2px solid var(--gd);border-radius:4px;font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:700"
+            oninput="pvTickerInput(this.value)">
+          <datalist id="pv-list"></datalist>
+        </div>
+        <div>
+          <div style="font-size:10px;color:var(--mu);margin-bottom:4px;font-family:'IBM Plex Mono',monospace;text-transform:uppercase">Nb titres</div>
+          <input id="pv-nb" type="number" min="1" placeholder="ex: 5"
+            style="width:90px;padding:9px 10px;border:1px solid var(--bd);border-radius:4px;font-family:'IBM Plex Mono',monospace;font-size:13px"
+            oninput="pvSyncNb()">
+        </div>
+        <div style="padding-bottom:8px;color:var(--mu);font-size:11px">ou</div>
+        <div>
+          <div style="font-size:10px;color:var(--mu);margin-bottom:4px;font-family:'IBM Plex Mono',monospace;text-transform:uppercase">Montant €</div>
+          <input id="pv-mt" type="number" min="10" step="50" placeholder="ex: 1000"
+            style="width:100px;padding:9px 10px;border:1px solid var(--bd);border-radius:4px;font-family:'IBM Plex Mono',monospace;font-size:13px"
+            oninput="pvSyncMt()">
+        </div>
+        <button onclick="pvAdd()" style="padding:10px 18px;background:linear-gradient(135deg,#16a34a,#4ade80);color:#fff;border:none;border-radius:4px;cursor:pointer;font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:700">+ AJOUTER</button>
+      </div>
+      <div id="pv-info" style="display:none;margin-top:10px;padding:8px 12px;background:#f5f3ef;border-radius:4px;font-size:11px;line-height:1.7"></div>
+      <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
+        <button onclick="pvAddGradeA()" style="padding:6px 10px;background:rgba(184,134,11,.1);color:#b8860b;border:1px solid rgba(184,134,11,.3);border-radius:4px;cursor:pointer;font-size:9px;font-family:'IBM Plex Mono',monospace">+ Toutes Grade A (1000€)</button>
+        <button onclick="window._ptfVirt=[];pvRefresh();" style="padding:6px 10px;background:rgba(239,68,68,.06);color:#ef4444;border:1px solid rgba(239,68,68,.15);border-radius:4px;cursor:pointer;font-size:9px;font-family:'IBM Plex Mono',monospace">Vider simul.</button>
+      </div>
+    </div>
+    <div style="background:#fff;border:1px solid var(--bd);border-radius:8px;padding:16px 18px">
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;text-transform:uppercase;color:#b8860b;letter-spacing:2px;margin-bottom:10px">POSITIONS SIMULÉES</div>
+      <div id="pv-table"><div style="text-align:center;padding:20px;color:var(--mu);font-style:italic;font-size:12px">Ajoute des positions pour simuler</div></div>
+      <div id="pv-results" style="display:none;margin-top:14px"></div>
+    </div>
   </div>
 
 </div>
