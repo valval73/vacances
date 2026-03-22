@@ -5100,7 +5100,23 @@ function showPg(pg,btn){
   if(pg==='tb')buildT(S);
   if(pg==='lx')buildLex();
   if(pg==='etf')buildETF();
-  if(pg==='ptf'){ptfInit();ptfLoadProfile(window._ptfProfile||'val');ptfPreloadVal();ptfRender();}
+  if(pg==='ptf'){
+    ptfInit();
+    ptfLoadProfile(window._ptfProfile||'val');
+    ptfPreloadVal();
+    ptfRender();
+    // Debug: afficher le nombre de positions
+    var dbg=document.getElementById('ptf-debug-banner');
+    if(dbg){
+      if(PTF.length===0){
+        dbg.style.display='block';
+        dbg.textContent='⚠️ Portefeuille vide. Clique "Recharger portefeuille Val" ci-dessous.';
+      } else {
+        dbg.style.display='none';
+      }
+    }
+    console.log('[PTF] Profil='+window._ptfProfile+' Positions='+PTF.length);
+  }
   if(pg==='acad')buildAcad('magic');
   if(pg==='pres')buildPres();
   if(pg==='plan')buildPlan();
@@ -5750,6 +5766,7 @@ function pdfFiche(){
         <div id="ptf-profile-badge" style="font-size:11px;color:var(--mu);font-family:'IBM Plex Mono',monospace;text-align:center">Actif : <b id="ptf-profile-name" style="color:#0f2540">Val</b></div>
       </div>
       <div class="ptf-add-title" id="ptf-form-title">+ Ajouter une position</div>
+      <div id="ptf-debug-banner" style="display:none;background:#fee2e2;padding:8px;border-radius:4px;margin-bottom:8px;font-size:11px;color:#dc2626;font-family:'IBM Plex Mono',monospace"></div>
       <div class="ptf-field">
         <label>Action</label>
         <input type="text" id="ptf-sel-input" list="ptf-sel-list" autocomplete="off"
@@ -5778,6 +5795,7 @@ function pdfFiche(){
       </div>
       <button class="ptf-btn" onclick="ptfAdd()" id="ptf-submit-btn">✅ Ajouter au portefeuille</button>
       <button class="ptf-btn" onclick="ptfExportExcel()" style="background:var(--gn);margin-top:6px;">📊 Exporter Excel</button>
+      <button class="ptf-btn" onclick="ptfResetAndReload()" style="background:#f59e0b;margin-top:6px;font-size:10px;">🔄 Recharger portefeuille Val</button>
       <div id="ptf-edit-cancel" style="display:none;">
         <button class="ptf-btn" onclick="ptfCancelEdit()" style="background:var(--mu);margin-top:4px;">✕ Annuler</button>
       </div>
@@ -7898,6 +7916,14 @@ function filtAlertes(type,btn){
   buildAlertes();
 }
 
+
+function ptfResetAndReload(){
+  if(!confirm('Recharger les 14 positions de Val? (efface les données actuelles du profil Val)')) return;
+  localStorage.removeItem('pea_ptf_val');
+  localStorage.removeItem('pea_hist_val');
+  PTF.length=0; PTF_HIST.length=0;
+  ptfPreloadVal();
+}
 document.addEventListener('DOMContentLoaded',function(){
   fil=[...S];buildQ();buildT(S);buildLex();buildETF();show(0);startR();
   setTimeout(checkAlerts,2000);
@@ -7911,40 +7937,6 @@ document.addEventListener('DOMContentLoaded',function(){
   },600);
 });
 </script>
-
-<div class="page" id="pg-acad">
-  <div class="recap-hd">
-    <div class="recap-title">🎓 Scores Académiques & Classements Quantitatifs</div>
-    <div style="display:flex;gap:6px;flex-wrap:wrap">
-      <button class="fb active" onclick="acadFilter('magic',this)">🏆 Magic Formula</button>
-      <button class="fb" onclick="acadFilter('ff',this)">📊 Fama-French</button>
-      <button class="fb" onclick="acadFilter('ow',this)">💰 O'Shaughnessy</button>
-      <button class="fb" onclick="acadFilter('composite',this)">⭐ Score Composite</button>
-      <button class="fb" onclick="acadFilter('divcal',this)">📅 Calendrier Dividendes</button>
-    </div>
-  </div>
-  <div style="background:var(--blb);border:1px solid rgba(26,74,122,.2);border-radius:4px;padding:10px 14px;margin-bottom:14px;font-size:11px;color:var(--bl);line-height:1.6">
-    <b>Approches académiques utilisées :</b><br>
-    🏆 <b>Magic Formula (Greenblatt 2005)</b> — Classe par ROIC (qualité) + EV/EBIT (valorisation). Rendement historique +24%/an sur 17 ans.<br>
-    📊 <b>Fama-French 5 facteurs</b> — Value + Profitabilité + Investissement + Momentum + Taille. Base de l'investissement factoriel institutionnel.<br>
-    💰 <b>O'Shaughnessy Value Composite</b> — P/S + EV/EBITDA + P/FCF + Yield + Momentum. Testé sur 50 ans de données US.
-  </div>
-  <div id="acad-content">
-    <div id="acad-magic"></div>
-    <div id="acad-ff" style="display:none"></div>
-    <div id="acad-ow" style="display:none"></div>
-    <div id="acad-composite" style="display:none"></div>
-    <div id="acad-divcal" style="display:none">
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
-        <div class="sc"><div class="sh">📅 Calendrier Dividendes — Paiements estimés</div><div style="padding:10px 14px" id="div-cal"></div></div>
-        <div class="sc"><div class="sh">💰 Rendement total estimé sur 1 an</div>
-          <div style="padding:14px" id="div-summary"></div>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-
 
 <div class="page" id="pg-bt">
 <div style="padding:20px 24px;max-width:1000px;margin:0 auto">
