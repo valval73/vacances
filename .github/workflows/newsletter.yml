@@ -1,8 +1,7 @@
 name: PEA Newsletter — Samedi 8h
 
 on:
-  schedule:
-    - cron: '0 7 * * 6'
+  # Envoi automatique désactivé le 06/10/2026 : un seul mail conservé (VAL.PEA · Revue, repo val.pea)
   workflow_dispatch:
 
 jobs:
